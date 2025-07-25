@@ -3,4 +3,9 @@
     <TargetFramework>net8.0</TargetFramework>
     <EnableDynamicLoading>true</EnableDynamicLoading>
   </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Steamworks.NET">
+      <HintPath>Bin\Steamworks\Windows-x64\Steamworks.NET.dll</HintPath>
+    </Reference>
+  </ItemGroup>
 </Project>

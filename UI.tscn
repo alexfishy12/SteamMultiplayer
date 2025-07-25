@@ -1,0 +1,159 @@
+[gd_scene load_steps=4 format=3 uid="uid://0xucn1irst5w"]
+
+[ext_resource type="Script" uid="uid://d3e8tewgydyr7" path="res://MultiplayerMenu.cs" id="1_g6l6n"]
+[ext_resource type="PackedScene" uid="uid://4wwqli7y6s73" path="res://PlayerListItem.tscn" id="2_qui0h"]
+[ext_resource type="PackedScene" uid="uid://bs08wcister6v" path="res://LobbyListItem.tscn" id="3_vrfts"]
+
+[node name="CanvasLayer" type="CanvasLayer"]
+
+[node name="MultiplayerMenu" type="Control" parent="." node_paths=PackedStringArray("mainMenuPanel", "hostGameButton", "joinGameButton", "quitGameButton", "lobbyPanel", "inviteFriendButton", "playerListContainer", "startGameButton", "quitLobbyButton", "joinGamePanel", "searchForLobbiesButton", "lobbyListContainer", "backButton")]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_g6l6n")
+mainMenuPanel = NodePath("Main")
+hostGameButton = NodePath("Main/HBoxContainer/VBoxContainer/Host")
+joinGameButton = NodePath("Main/HBoxContainer/VBoxContainer/Join")
+quitGameButton = NodePath("Main/HBoxContainer/VBoxContainer/QuitGame")
+lobbyPanel = NodePath("Hosting")
+inviteFriendButton = NodePath("Hosting/HBoxContainer/FirstColumn/Invite a Friend")
+playerListContainer = NodePath("Hosting/HBoxContainer/PanelContainer/SecondColumn/PlayerList")
+playerListItemScene = ExtResource("2_qui0h")
+startGameButton = NodePath("Hosting/HBoxContainer/FirstColumn/Start Game")
+quitLobbyButton = NodePath("Hosting/HBoxContainer/FirstColumn/Quit Lobby")
+joinGamePanel = NodePath("Joining")
+searchForLobbiesButton = NodePath("Joining/HBoxContainer/FirstColumn/Search for lobbies")
+lobbyListContainer = NodePath("Joining/HBoxContainer/PanelContainer/SecondColumn/LobbyList")
+lobbyListItemScene = ExtResource("3_vrfts")
+backButton = NodePath("Joining/HBoxContainer/FirstColumn/BackButton")
+
+[node name="Main" type="MarginContainer" parent="MultiplayerMenu"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MultiplayerMenu/Main"]
+layout_mode = 2
+alignment = 1
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MultiplayerMenu/Main/HBoxContainer"]
+layout_mode = 2
+alignment = 1
+
+[node name="Host" type="Button" parent="MultiplayerMenu/Main/HBoxContainer/VBoxContainer"]
+layout_mode = 2
+text = "Host a game"
+
+[node name="Join" type="Button" parent="MultiplayerMenu/Main/HBoxContainer/VBoxContainer"]
+layout_mode = 2
+text = "Join a game"
+
+[node name="QuitGame" type="Button" parent="MultiplayerMenu/Main/HBoxContainer/VBoxContainer"]
+layout_mode = 2
+text = "Quit Game"
+
+[node name="Hosting" type="MarginContainer" parent="MultiplayerMenu"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MultiplayerMenu/Hosting"]
+layout_mode = 2
+alignment = 1
+
+[node name="FirstColumn" type="VBoxContainer" parent="MultiplayerMenu/Hosting/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 2
+
+[node name="Quit Lobby" type="Button" parent="MultiplayerMenu/Hosting/HBoxContainer/FirstColumn"]
+layout_mode = 2
+text = "Quit Lobby"
+
+[node name="Invite a Friend" type="Button" parent="MultiplayerMenu/Hosting/HBoxContainer/FirstColumn"]
+layout_mode = 2
+text = "Invite a friend"
+
+[node name="Start Game" type="Button" parent="MultiplayerMenu/Hosting/HBoxContainer/FirstColumn"]
+layout_mode = 2
+text = "Start Game"
+
+[node name="PanelContainer" type="PanelContainer" parent="MultiplayerMenu/Hosting/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="SecondColumn" type="VBoxContainer" parent="MultiplayerMenu/Hosting/HBoxContainer/PanelContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Label" type="Label" parent="MultiplayerMenu/Hosting/HBoxContainer/PanelContainer/SecondColumn"]
+layout_mode = 2
+text = "Player List"
+
+[node name="PlayerList" type="VBoxContainer" parent="MultiplayerMenu/Hosting/HBoxContainer/PanelContainer/SecondColumn"]
+layout_mode = 2
+
+[node name="Joining" type="MarginContainer" parent="MultiplayerMenu"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MultiplayerMenu/Joining"]
+layout_mode = 2
+alignment = 1
+
+[node name="FirstColumn" type="VBoxContainer" parent="MultiplayerMenu/Joining/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 2
+
+[node name="BackButton" type="Button" parent="MultiplayerMenu/Joining/HBoxContainer/FirstColumn"]
+layout_mode = 2
+text = "Back to main"
+
+[node name="Join a Friend" type="Button" parent="MultiplayerMenu/Joining/HBoxContainer/FirstColumn"]
+layout_mode = 2
+text = "Join a Friend"
+
+[node name="Search for lobbies" type="Button" parent="MultiplayerMenu/Joining/HBoxContainer/FirstColumn"]
+layout_mode = 2
+text = "Search for lobbies"
+
+[node name="PanelContainer" type="PanelContainer" parent="MultiplayerMenu/Joining/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="SecondColumn" type="VBoxContainer" parent="MultiplayerMenu/Joining/HBoxContainer/PanelContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Label" type="Label" parent="MultiplayerMenu/Joining/HBoxContainer/PanelContainer/SecondColumn"]
+layout_mode = 2
+text = "Lobby List"
+
+[node name="LobbyList" type="VBoxContainer" parent="MultiplayerMenu/Joining/HBoxContainer/PanelContainer/SecondColumn"]
+layout_mode = 2
