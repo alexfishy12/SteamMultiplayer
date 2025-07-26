@@ -1,8 +1,8 @@
 [gd_scene load_steps=4 format=3 uid="uid://0xucn1irst5w"]
 
 [ext_resource type="Script" uid="uid://d3e8tewgydyr7" path="res://MultiplayerMenu.cs" id="1_g6l6n"]
-[ext_resource type="PackedScene" uid="uid://4wwqli7y6s73" path="res://PlayerListItem.tscn" id="2_qui0h"]
-[ext_resource type="PackedScene" uid="uid://bs08wcister6v" path="res://LobbyListItem.tscn" id="3_vrfts"]
+[ext_resource type="PackedScene" uid="uid://4wwqli7y6s73" path="res://PlayerListItem.tscn" id="2_g6l6n"]
+[ext_resource type="PackedScene" uid="uid://bs08wcister6v" path="res://LobbyListItem.tscn" id="3_qui0h"]
 
 [node name="CanvasLayer" type="CanvasLayer"]
 
@@ -21,13 +21,13 @@ quitGameButton = NodePath("Main/HBoxContainer/VBoxContainer/QuitGame")
 lobbyPanel = NodePath("Hosting")
 inviteFriendButton = NodePath("Hosting/HBoxContainer/FirstColumn/Invite a Friend")
 playerListContainer = NodePath("Hosting/HBoxContainer/PanelContainer/SecondColumn/PlayerList")
-playerListItemScene = ExtResource("2_qui0h")
+playerListItemScene = ExtResource("2_g6l6n")
 startGameButton = NodePath("Hosting/HBoxContainer/FirstColumn/Start Game")
 quitLobbyButton = NodePath("Hosting/HBoxContainer/FirstColumn/Quit Lobby")
 joinGamePanel = NodePath("Joining")
 searchForLobbiesButton = NodePath("Joining/HBoxContainer/FirstColumn/Search for lobbies")
 lobbyListContainer = NodePath("Joining/HBoxContainer/PanelContainer/SecondColumn/LobbyList")
-lobbyListItemScene = ExtResource("3_vrfts")
+lobbyListItemScene = ExtResource("3_qui0h")
 backButton = NodePath("Joining/HBoxContainer/FirstColumn/BackButton")
 
 [node name="Main" type="MarginContainer" parent="MultiplayerMenu"]
