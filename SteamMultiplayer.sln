@@ -1,6 +1,6 @@
 ﻿Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SteamMultiplayer", "SteamMultiplayer.csproj", "{B8E836B0-E5F9-42B7-AF7E-37A46BB09B1C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SteamMultiplayer", "SteamMultiplayer.csproj", "{BF181278-0037-4615-87E5-68E86CB1CABD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -9,11 +9,11 @@ Global
 	ExportRelease|Any CPU = ExportRelease|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{B8E836B0-E5F9-42B7-AF7E-37A46BB09B1C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B8E836B0-E5F9-42B7-AF7E-37A46BB09B1C}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B8E836B0-E5F9-42B7-AF7E-37A46BB09B1C}.ExportDebug|Any CPU.ActiveCfg = ExportDebug|Any CPU
-		{B8E836B0-E5F9-42B7-AF7E-37A46BB09B1C}.ExportDebug|Any CPU.Build.0 = ExportDebug|Any CPU
-		{B8E836B0-E5F9-42B7-AF7E-37A46BB09B1C}.ExportRelease|Any CPU.ActiveCfg = ExportRelease|Any CPU
-		{B8E836B0-E5F9-42B7-AF7E-37A46BB09B1C}.ExportRelease|Any CPU.Build.0 = ExportRelease|Any CPU
+		{BF181278-0037-4615-87E5-68E86CB1CABD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BF181278-0037-4615-87E5-68E86CB1CABD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BF181278-0037-4615-87E5-68E86CB1CABD}.ExportDebug|Any CPU.ActiveCfg = ExportDebug|Any CPU
+		{BF181278-0037-4615-87E5-68E86CB1CABD}.ExportDebug|Any CPU.Build.0 = ExportDebug|Any CPU
+		{BF181278-0037-4615-87E5-68E86CB1CABD}.ExportRelease|Any CPU.ActiveCfg = ExportRelease|Any CPU
+		{BF181278-0037-4615-87E5-68E86CB1CABD}.ExportRelease|Any CPU.Build.0 = ExportRelease|Any CPU
 	EndGlobalSection
 EndGlobal

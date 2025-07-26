@@ -1,47 +1,11 @@
 <Project Sdk="Godot.NET.Sdk/4.4.1">
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
-    <RootNamespace>SteamMultiplayer</RootNamespace>
     <EnableDynamicLoading>true</EnableDynamicLoading>
-    <GodotProjectRoot>$(MSBuildProjectDirectory)</GodotProjectRoot>
-    <SteamworksFolder>addons/Steamworks.NET</SteamworksFolder>
   </PropertyGroup>
   <ItemGroup>
-    <!-- Steamworks.NET ========================= -->
-    <Reference Include="Steamworks.NET" HintPath="addons/Steamworks.NET/OSX-Linux-x64/Steamworks.NET.dll" />
-    
-    <!-- Windows DLL -->
-    <Content Include="addons/Steamworks.NET/Windows-x64/steam_api64.dll">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      <CopyToPublishDirectory>Always</CopyToPublishDirectory>
-      <Link>steam_api64.dll</Link>
-    </Content>
-    
-    <!-- macOS dylib -->
-    <Content Include="addons/Steamworks.NET/OSX-Linux-x64/steam_api.bundle/Contents/MacOS/libsteam_api.dylib" Condition=" '$(OS)' == 'Unix' ">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      <Link>libsteam_api.dylib</Link>
-    </Content>
-
-    <!-- Linux so -->
-    <Content Include="addons/Steamworks.NET/OSX-Linux-x64/libsteam_api.so" Condition=" '$(OS)' == 'Unix' ">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      <Link>libsteam_api.so</Link>
-    </Content>
+    <Reference Include="Steamworks.NET">
+      <HintPath>Bin\Steamworks\Windows-x64\Steamworks.NET.dll</HintPath>
+    </Reference>
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include=".godot\" />
-  </ItemGroup>
-  <Target Name="CopySteamAPILibrary" AfterTargets="Build">
-    <!-- Windows: copy steam_api64.dll -->
-    <Copy Condition=" '$(OS)' == 'Windows_NT' " SourceFiles="addons/Steamworks.NET/Windows-x64/steam_api64.dll" DestinationFolder="$(GodotProjectRoot)" />
-
-    <!-- macOS: copy libsteam_api.dylib; note that Steamworks on macOS uses the .bundle folder structure,
-         but the core binary is in the .dylib. -->
-    <Copy Condition=" '$(OS)' == 'Unix' " SourceFiles="addons/Steamworks.NET/OSX-Linux-x64/steam_api.bundle/Contents/MacOS/libsteam_api.dylib" DestinationFolder="$(GodotProjectRoot)" />
-
-    <!-- Linux: copy libsteam_api.so -->
-    <Copy Condition=" '$(OS)' == 'Unix' " SourceFiles="addons/Steamworks.NET/OSX-Linux-x64/libsteam_api.so" DestinationFolder="$(GodotProjectRoot)" />
-  </Target>
-  <!-- END Steamworks.NET ========================= -->
 </Project>

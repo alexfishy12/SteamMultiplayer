@@ -1,21 +1,20 @@
 using Godot;
-using Steamworks;
 using System;
 
-public partial class LobbyListItem : PanelContainer
+public partial class PlayerrListItem : PanelContainer
 {
     [Export] private Label nameLabel;
     [Export] private Label pingLabel;
-    [Export] private Button joinButton;
+    [Export] private Button kickButton;
 
-    private CSteamID _lobbyId;
-    public CSteamID LobbyId
+    private string _playerName;
+    public string PlayerName
     {
-        get => _lobbyId;
+        get => _playerName;
         set
         {
-            _lobbyId = value;
-            nameLabel.Text = _lobbyId.ToString();
+            _playerName = value;
+            nameLabel.Text = _playerName;
         }
     }
 
@@ -33,12 +32,15 @@ public partial class LobbyListItem : PanelContainer
 
     public override void _Ready()
     {
-        joinButton.Pressed += OnJoinButtonPressed;
+        kickButton.Pressed += OnKickButtonPressed;
     }
 
-    private void OnJoinButtonPressed()
+    private void OnKickButtonPressed()
     {
-        LobbyManager.Instance.JoinLobby(_lobbyId);
+        // Logic to kick the player from the lobby
+        // This could involve calling a method in your lobby manager or network manager
+        GD.Print($"Kicking player: {_playerName}");
+        // Example: LobbyManager.Instance.KickPlayer(_playerId);
     }
 
     private void UpdatePingUi(string newPing)
