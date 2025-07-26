@@ -1,6 +1,7 @@
 using Godot;
 using Steamworks;
-using System;
+
+namespace SteamMultiplayer;
 
 public partial class LobbyListItem : PanelContainer
 {
