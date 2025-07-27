@@ -12,6 +12,7 @@ public partial class LobbyManager : Node2D
     private CallResult<LobbyMatchList_t> m_LobbyMatchList;
     private CallResult<LobbyEnter_t> m_LobbyEnter;
     private Callback<PersonaStateChange_t> m_PersonaStateChange;
+    private Callback<LobbyChatUpdate_t> m_LobbyChatUpdate;
 
     public event Action<Lobby> LobbyLeft;
     public event Action<Lobby> LobbyJoined;
@@ -38,6 +39,7 @@ public partial class LobbyManager : Node2D
         CurrentPlayer.Name = SteamFriends.GetPersonaName();
 
         m_PersonaStateChange = Callback<PersonaStateChange_t>.Create(OnPersonaStateChanged);
+        m_LobbyChatUpdate = Callback<LobbyChatUpdate_t>.Create(OnLobbyChatUpdate);
 
         GD.Print("LobbyManager initialized successfully.");
     }
@@ -179,39 +181,83 @@ public partial class LobbyManager : Node2D
         }
     }
 
+    private void OnLobbyChatUpdate(LobbyChatUpdate_t result)
+    {
+        try
+        {
+            if (result.m_ulSteamIDLobby != CurrentLobby.Id.m_SteamID) return;
+
+            CSteamID userChangedId = new CSteamID(result.m_ulSteamIDUserChanged);
+            CSteamID userMakingChangeId = new CSteamID(result.m_ulSteamIDMakingChange);
+
+            LobbyMember changedMember = LobbyMemberList.ContainsKey(userChangedId) ? 
+                LobbyMemberList[userChangedId] : 
+                new LobbyMember(userChangedId);
+
+            LobbyMember makingChangeMember = LobbyMemberList.ContainsKey(userMakingChangeId) ?
+                LobbyMemberList[userMakingChangeId] :
+                new LobbyMember(userMakingChangeId);
+
+            GD.Print($"OnLobbyChatUpdate called for lobby ID: {result.m_ulSteamIDLobby}");
+
+            switch ((EChatMemberStateChange)result.m_rgfChatMemberStateChange)
+            {
+                case EChatMemberStateChange.k_EChatMemberStateChangeEntered:
+                    GD.Print($"{changedMember} has entered the lobby.");
+                    GD.Print($"Requesting user information for memberId: {changedMember}");
+                    if (!SteamFriends.RequestUserInformation(changedMember.Id, false))
+                    {
+                        GD.Print("We already have all the details for memberId: " + changedMember);
+                        changedMember.Name = SteamFriends.GetFriendPersonaName(changedMember.Id);
+                    }
+                    LobbyMemberList[changedMember.Id] = changedMember;
+                    break;
+                case EChatMemberStateChange.k_EChatMemberStateChangeLeft:
+                    GD.Print($"{changedMember} has left the lobby.");
+                    LobbyMemberList.Remove(changedMember.Id);
+                    break;
+                case EChatMemberStateChange.k_EChatMemberStateChangeDisconnected:
+                    GD.Print($"{changedMember} has disconnected from the lobby.");
+                    LobbyMemberList.Remove(changedMember.Id);
+                    break;
+                case EChatMemberStateChange.k_EChatMemberStateChangeKicked:
+                    GD.Print($"{changedMember} has been kicked from the lobby.");
+                    LobbyMemberList.Remove(changedMember.Id);
+                    break;
+                case EChatMemberStateChange.k_EChatMemberStateChangeBanned:
+                    GD.Print($"{changedMember} has been banned from the lobby.");
+                    LobbyMemberList.Remove(changedMember.Id);
+                    break;
+                default:
+                    GD.Print($"{changedMember} has left the lobby or changed state.");
+
+                    break;
+            }
+
+            LobbyMembersUpdated?.Invoke(LobbyMemberList.Values.ToList());
+        }
+        catch (Exception ex)
+        {
+            GD.PrintErr($"Exception in OnLobbyChatUpdate: {ex}");
+        }
+    }
+
     private void OnPersonaStateChanged(PersonaStateChange_t result)
     {
         try
         {
             CSteamID memberId = new CSteamID(result.m_ulSteamID);
-            string personaName;
-            GD.Print($"OnPersonaStateChanged called for memberId: {memberId.m_SteamID}");
-
-            if (!memberId.IsValid())
-            {
-                GD.PrintErr($"Invalid memberId in OnPersonaStateChanged: {memberId.m_SteamID}");
-                return;
-            }
-
             if (!LobbyMemberList.ContainsKey(memberId))
-            {
-                GD.Print($"Member ID {memberId.m_SteamID} not found in LobbyMemberList. Skipping update.");
                 return;
-            }
 
-            if (memberId == SteamUser.GetSteamID())
-            {
-                personaName = SteamFriends.GetPersonaName();
-            }
-            else
-            {
-                personaName = SteamFriends.GetFriendPersonaName(memberId);
-            }
+            string personaName = memberId == SteamUser.GetSteamID()
+                ? SteamFriends.GetPersonaName()
+                : SteamFriends.GetFriendPersonaName(memberId);
 
             LobbyMemberList[memberId].Name = personaName;
-            GD.Print($"Updated member '{LobbyMemberList[memberId].Name}' in LobbyMemberList.");
-
+            GD.Print($"PersonaStateChanged: Updated member '{personaName}' in LobbyMemberList.");
             LobbyMembersUpdated?.Invoke(LobbyMemberList.Values.ToList());
+            
         }
         catch (Exception ex)
         {

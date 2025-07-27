@@ -18,6 +18,6 @@ public class LobbyMember
 
     public override string ToString()
     {
-        return $"LobbyMember: {Name} (ID: {Id}, Points: {points}, Rank: {Rank}, Kills: {Kills}, Deaths: {Deaths})";
+        return $"{Name} ({Id})";
     }
 }
