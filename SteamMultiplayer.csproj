@@ -43,16 +43,13 @@
     <PropertyGroup>
         <SteamworksNETDLL>$(PlatformFolder)/Steamworks.NET.dll</SteamworksNETDLL>
     </PropertyGroup>
-
+    
+    <!-- Debug print path to Steamworks.NET.dll -->
     <Target Name="ShowSteamworksNETDLLPath" BeforeTargets="Build">
         <Message Text="Steamworks.NET.dll path: '$(SteamworksNETDLL)'" Importance="high" />
     </Target>
-
-    <!--
-      Steamworks.NET integration:
-      - References the correct Steamworks.NET managed DLL for each platform (Windows, Linux/OSX).
-      - Handles copying of native libraries for both build output/publish and project root (for testing).
-    -->
+    
+    <!-- Include Steamworks platform-specific native libraries in the build output -->
     <ItemGroup Condition=" '$(SteamworksNativeLib)' != '' ">
         <Reference Include="Steamworks.NET" HintPath="$(SteamworksNETDLL)"></Reference>
         <Content Include="$(SteamworksNativeLib)">
@@ -62,9 +59,11 @@
         </Content>
     </ItemGroup>
 
-    <Target Name="CopyDevelopmentDLLs" BeforeTargets="Build" Condition=" '$(SteamworksNativeLib' != '' ">
-        <Message Text="Platform-specific Steamworks.NET API for $(RuntimeIdentifier) will be copied to project root directory." Importance="high" />
+    <!-- Include Steamworks platform-specific native libraries in the project root (for development builds) -->
+    <Target Name="CopyDevelopmentDLLs" BeforeTargets="Build" Condition=" '$(SteamworksNativeLib)' != '' ">
+        <Message Text="Platform-specific Steamworks.NET API for $(SteamworksTargetPlatform) will be copied to project root directory." Importance="high" />
         <Copy SourceFiles="$(SteamworksNativeLib)" DestinationFolder="$(ProjectRoot)" />
-        <Message Text="Copied '$(SteamworksNativeLink)' into '$(ProjectRoot)'..." Importance="high" />
+        <Message Text="Copied '$(SteamworksNativeLink)' into '$(ProjectRoot)'." Importance="high" />
     </Target>
+    
 </Project>
