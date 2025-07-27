@@ -6,6 +6,8 @@ public partial class SteamworksManager : Node
 {
     public static SteamworksManager Instance { get; private set; }
 
+    private AppId_t appId =  new(3879030);
+
     public override void _Ready()
     {
         if (Instance != null)
@@ -16,6 +18,12 @@ public partial class SteamworksManager : Node
         GD.Print(SteamAPI.IsSteamRunning() ? "Steam is running." : "Steam is not running. Please start Steam to use the Steam API.");
         try
         {
+            if ( SteamAPI.RestartAppIfNecessary(appId) ) 
+            {
+                GD.Print("Restarting app to ensure Steam API is initialized correctly.");
+                GetTree().Quit();
+                return; // Exit if the app needs to be restarted
+            }
             if (!SteamAPI.Init())
             {
                 GD.PrintErr("Failed to initialize Steam API.");

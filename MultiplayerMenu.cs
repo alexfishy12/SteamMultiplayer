@@ -30,6 +30,7 @@ public partial class MultiplayerMenu : Control
     {
         hostGameButton.Pressed += OnHostGameButtonPressed;
         joinGameButton.Pressed += OnJoinGameButtonPressed;
+        quitGameButton.Pressed += () => GetTree().Quit();
 
         inviteFriendButton.Pressed += OnInviteFriendButtonPressed;
         startGameButton.Pressed += OnStartGameButtonPressed;
@@ -77,6 +78,7 @@ public partial class MultiplayerMenu : Control
             PlayerListItem playerItem = playerListItemScene.Instantiate<PlayerListItem>();
             playerItem.PlayerName = member.Name;
             playerItem.playerId = member.Id.m_SteamID;
+            playerItem.PlayerAvatar = member.Avatar != null ? ImageTexture.CreateFromImage(member.Avatar): null;
             playerList.AddChild(playerItem);
 
         }

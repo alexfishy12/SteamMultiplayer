@@ -1,0 +1,31 @@
+[gd_scene load_steps=2 format=3 uid="uid://bf3kxo7jk23uj"]
+
+[ext_resource type="Script" uid="uid://ct7yjc5l2befo" path="res://ChatPanel.cs" id="1_sx3uj"]
+
+[node name="ChatPanel" type="VBoxContainer" node_paths=PackedStringArray("messageInput", "sendButton", "chatList")]
+size_flags_horizontal = 3
+script = ExtResource("1_sx3uj")
+messageInput = NodePath("HBoxContainer/ChatInputLineEdit")
+sendButton = NodePath("HBoxContainer/SendButton")
+chatList = NodePath("ChatList")
+
+[node name="Label" type="Label" parent="."]
+layout_mode = 2
+text = "Chat:"
+
+[node name="ChatList" type="VBoxContainer" parent="."]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="HBoxContainer" type="HBoxContainer" parent="."]
+layout_mode = 2
+
+[node name="ChatInputLineEdit" type="LineEdit" parent="HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 12
+
+[node name="SendButton" type="Button" parent="HBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "Send"

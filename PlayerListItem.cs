@@ -4,10 +4,28 @@ using System;
 public partial class PlayerListItem : PanelContainer
 {
     [Export] public ulong playerId;
+    [Export] private TextureRect playerAvatar;
     [Export] private Label nameLabel;
     [Export] private Label pingLabel;
     [Export] private Button kickButton;
 
+    public Texture2D PlayerAvatar
+    {
+        get => playerAvatar.Texture;
+        set
+        {
+            playerAvatar.Texture = value;
+            if (value != null)
+            {
+                playerAvatar.Visible = true;
+            }
+            else
+            {
+                playerAvatar.Texture = new PlaceholderTexture2D();
+                playerAvatar.Visible = false;
+            }
+        }
+    }
     public string PlayerName
     {
         get => nameLabel.Text;

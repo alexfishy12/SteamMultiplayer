@@ -18,6 +18,7 @@ public partial class LobbyManager : Node2D
     public event Action<Lobby> LobbyJoined;
     public event Action<List<Lobby>> LobbyListUpdated;
     public event Action<List<LobbyMember>> LobbyMembersUpdated;
+    public event Action<ChatMessage> ChatMessageReceived;
 
     public LobbyMember CurrentPlayer;
     public Lobby CurrentLobby;
@@ -38,6 +39,28 @@ public partial class LobbyManager : Node2D
         CurrentPlayer = new LobbyMember(SteamUser.GetSteamID());
         CurrentPlayer.Name = SteamFriends.GetPersonaName();
 
+
+        int avatarFlag = 0; // SteamFriends.GetSmallFriendAvatar(CurrentPlayer.Id);
+        if (avatarFlag == 0)
+        {
+            GD.Print("No avatar found for the current player.");
+        }
+        else
+        {
+            SteamUtils.GetImageSize(avatarFlag, out uint width, out uint height);
+            byte[] avatarData = new byte[width * height * 4];
+            bool v = SteamUtils.GetImageRGBA(avatarFlag, avatarData, (int)(width * height * 4));
+            if (v)
+            {
+                Image avatar = Image.CreateFromData((int)width, (int)height, false, Image.Format.Rgba8, avatarData);
+                CurrentPlayer.Avatar = avatar;
+            }
+            else
+            {
+                GD.PrintErr("Failed to get avatar image data.");
+            }
+        }
+        
         m_PersonaStateChange = Callback<PersonaStateChange_t>.Create(OnPersonaStateChanged);
         m_LobbyChatUpdate = Callback<LobbyChatUpdate_t>.Create(OnLobbyChatUpdate);
 
@@ -110,15 +133,6 @@ public partial class LobbyManager : Node2D
         m_LobbyEnter.Set(call);
     }
 
-    public void LeaveCurrentLobby()
-    {
-        SteamMatchmaking.LeaveLobby(CurrentLobby.Id);
-        LobbyMemberList.Clear();
-        LobbyLeft?.Invoke(CurrentLobby);
-        CurrentLobby = null; // Clear the current lobby reference
-        CurrentPlayer.IsHost = false;
-    }
-
     private void OnLobbyEntered(LobbyEnter_t result, bool bIOFailure)
     {
         if (bIOFailure)
@@ -136,6 +150,18 @@ public partial class LobbyManager : Node2D
 
         LobbyJoined?.Invoke(CurrentLobby); // Here you can update the UI or notify other parts of your game that the lobby has been joined
         GetLobbyMembers(); // Fetch members of the lobby after joining
+    }
+
+    public void LeaveCurrentLobby()
+    {
+        if (CurrentLobby != null)
+        {
+            SteamMatchmaking.LeaveLobby(CurrentLobby.Id);
+            LobbyMemberList.Clear();
+        }
+        LobbyLeft?.Invoke(CurrentLobby);
+        CurrentLobby = null; // Clear the current lobby reference
+        CurrentPlayer.IsHost = false;
     }
 
     public void GetLobbyMembers()
@@ -168,19 +194,20 @@ public partial class LobbyManager : Node2D
                     LobbyMemberList[memberId] = new LobbyMember(memberId);
                 }
 
+                GD.Print("Requesting user information for memberId: " + memberId.m_SteamID);
                 if (!SteamFriends.RequestUserInformation(memberId, false))
                 {
                     GD.Print("We already have all the details for memberId: " + memberId.m_SteamID);
-                    continue;
+                    LobbyMemberList[memberId].Name = SteamFriends.GetFriendPersonaName(memberId);
                 }
-                
-                GD.Print("Requesting user information for memberId: " + memberId.m_SteamID);
             }
             catch (Exception ex)
             {
                 GD.PrintErr($"Exception in GetLobbyMembers loop: {ex}");
             }
         }
+
+        LobbyMembersUpdated?.Invoke(LobbyMemberList.Values.ToList());
     }
 
     private void OnLobbyChatUpdate(LobbyChatUpdate_t result)
@@ -232,11 +259,10 @@ public partial class LobbyManager : Node2D
                     break;
                 default:
                     GD.Print($"{changedMember} has left the lobby or changed state.");
-
                     break;
             }
 
-            LobbyMembersUpdated?.Invoke(LobbyMemberList.Values.ToList());
+            GetLobbyMembers();
         }
         catch (Exception ex)
         {
@@ -246,15 +272,28 @@ public partial class LobbyManager : Node2D
 
     private void OnPersonaStateChanged(PersonaStateChange_t result)
     {
+        GD.Print("OnPersonaStateChanged called.");
         try
         {
             CSteamID memberId = new CSteamID(result.m_ulSteamID);
-            if (!LobbyMemberList.ContainsKey(memberId))
-                return;
+            //if (!LobbyMemberList.ContainsKey(memberId))
+            //    return;
+            string personaName;
 
-            string personaName = memberId == SteamUser.GetSteamID()
-                ? SteamFriends.GetPersonaName()
-                : SteamFriends.GetFriendPersonaName(memberId);
+            if (memberId == SteamUser.GetSteamID())
+            {
+                personaName = SteamFriends.GetPersonaName();
+            }
+            else
+            {
+                personaName = SteamFriends.GetFriendPersonaName(memberId);
+            }
+
+            if (!LobbyMemberList.ContainsKey(memberId))
+            {
+                GD.Print($"Member {memberId} not found in LobbyMemberList, creating new entry.");
+                LobbyMemberList[memberId] = new LobbyMember(memberId);
+            }
 
             LobbyMemberList[memberId].Name = personaName;
             GD.Print($"PersonaStateChanged: Updated member '{personaName}' in LobbyMemberList.");
@@ -266,5 +305,70 @@ public partial class LobbyManager : Node2D
             GD.PrintErr($"Exception in OnPersonaStateChanged: {ex}");
             return;
         }
+    }
+
+    public bool SendChatMessage(string message)
+    {
+        if (CurrentLobby == null)
+        {
+            GD.PrintErr("No active lobby to send a chat message.");
+            return false;
+        }
+        if (string.IsNullOrWhiteSpace(message))
+        {
+            GD.PrintErr("Cannot send an empty message.");
+            return false;
+        }
+        bool chatSent = SteamMatchmaking.SendLobbyChatMsg(CurrentLobby.Id, message.ToUtf8Buffer(), message.Length + 1);
+        if (chatSent)
+        {
+            GD.Print($"Chat message sent successfully: {message}");
+            return true;
+        }
+        else
+        {
+            GD.Print($"Failed to send chat message: {message}");
+            return false;
+        }
+    }
+
+    public void OnLobbyChatReceived(LobbyChatMsg_t result)
+    {
+        if (result.m_ulSteamIDLobby != CurrentLobby.Id.m_SteamID)
+        {
+            GD.PrintErr("Received chat message for a different lobby.");
+            return;
+        }
+
+        GD.Print($"Chat message received in lobby {CurrentLobby.Id}: {result.m_iChatID}");
+
+        CSteamID senderId;
+        EChatEntryType chatEntryType;
+        byte[] data = new byte[4096];
+
+        int messageLength = SteamMatchmaking.GetLobbyChatEntry(
+            CurrentLobby.Id,
+            (int)result.m_iChatID,
+            out senderId, 
+            data, 
+            data.Length,
+            out chatEntryType
+        );
+        if (messageLength <= 0)
+        {
+            GD.PrintErr("Failed to retrieve chat message.");
+            return;
+        }
+        // Convert byte array to string
+        string message = System.Text.Encoding.UTF8.GetString(data, 0, messageLength);
+        
+        ChatMessage chatMsg = new ChatMessage
+        (
+            senderId,
+            SteamFriends.GetFriendPersonaName(senderId),
+            message
+        );
+
+        ChatMessageReceived?.Invoke(chatMsg);
     }
 }

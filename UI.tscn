@@ -1,8 +1,9 @@
-[gd_scene load_steps=4 format=3 uid="uid://0xucn1irst5w"]
+[gd_scene load_steps=5 format=3 uid="uid://0xucn1irst5w"]
 
 [ext_resource type="Script" uid="uid://d3e8tewgydyr7" path="res://MultiplayerMenu.cs" id="1_g6l6n"]
 [ext_resource type="PackedScene" uid="uid://4wwqli7y6s73" path="res://PlayerListItem.tscn" id="2_g6l6n"]
 [ext_resource type="PackedScene" uid="uid://bs08wcister6v" path="res://LobbyListItem.tscn" id="3_qui0h"]
+[ext_resource type="PackedScene" uid="uid://bf3kxo7jk23uj" path="res://ChatPanel.tscn" id="4_qui0h"]
 
 [node name="CanvasLayer" type="CanvasLayer"]
 
@@ -128,19 +129,7 @@ layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="SecondColumn" type="VBoxContainer" parent="MultiplayerMenu/Hosting/HBoxContainer/VBoxContainer/PanelContainer_2"]
-layout_mode = 2
-size_flags_horizontal = 3
-
-[node name="Label" type="Label" parent="MultiplayerMenu/Hosting/HBoxContainer/VBoxContainer/PanelContainer_2/SecondColumn"]
-layout_mode = 2
-text = "Chat:"
-
-[node name="ChatList" type="VBoxContainer" parent="MultiplayerMenu/Hosting/HBoxContainer/VBoxContainer/PanelContainer_2/SecondColumn"]
-layout_mode = 2
-size_flags_vertical = 3
-
-[node name="LineEdit" type="LineEdit" parent="MultiplayerMenu/Hosting/HBoxContainer/VBoxContainer/PanelContainer_2/SecondColumn"]
+[node name="ChatPanel" parent="MultiplayerMenu/Hosting/HBoxContainer/VBoxContainer/PanelContainer_2" instance=ExtResource("4_qui0h")]
 layout_mode = 2
 
 [node name="Joining" type="MarginContainer" parent="MultiplayerMenu"]

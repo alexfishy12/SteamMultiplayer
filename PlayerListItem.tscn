@@ -1,25 +1,46 @@
-[gd_scene load_steps=2 format=3 uid="uid://4wwqli7y6s73"]
+[gd_scene load_steps=3 format=3 uid="uid://4wwqli7y6s73"]
 
 [ext_resource type="Script" uid="uid://igqfthopar05" path="res://PlayerListItem.cs" id="1_piyk5"]
+[ext_resource type="Texture2D" uid="uid://kspx2p8oqvka" path="res://icon.svg" id="2_mbdwi"]
 
-[node name="PlayerListItem" type="PanelContainer" node_paths=PackedStringArray("nameLabel", "pingLabel", "kickButton")]
+[node name="PlayerListItem" type="PanelContainer" node_paths=PackedStringArray("playerAvatar", "nameLabel", "pingLabel", "kickButton")]
 script = ExtResource("1_piyk5")
-nameLabel = NodePath("HBoxContainer/PlayerNameLabel")
-pingLabel = NodePath("HBoxContainer/PingLabel")
-kickButton = NodePath("HBoxContainer/KickButton")
+playerAvatar = NodePath("MarginContainer/HBoxContainer/PlayerAvatar")
+nameLabel = NodePath("MarginContainer/HBoxContainer/PlayerNameLabel")
+pingLabel = NodePath("MarginContainer/HBoxContainer/PingLabel")
+kickButton = NodePath("MarginContainer/HBoxContainer/KickButton")
 
-[node name="HBoxContainer" type="HBoxContainer" parent="."]
+[node name="MarginContainer" type="MarginContainer" parent="."]
 layout_mode = 2
+theme_override_constants/margin_left = 3
+theme_override_constants/margin_top = 3
+theme_override_constants/margin_right = 3
+theme_override_constants/margin_bottom = 3
 
-[node name="PlayerNameLabel" type="Label" parent="HBoxContainer"]
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer"]
 layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="PlayerAvatar" type="TextureRect" parent="MarginContainer/HBoxContainer"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 0
+texture = ExtResource("2_mbdwi")
+expand_mode = 1
+
+[node name="PlayerNameLabel" type="Label" parent="MarginContainer/HBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
 text = "Distort"
 
-[node name="PingLabel" type="Label" parent="HBoxContainer"]
+[node name="PingLabel" type="Label" parent="MarginContainer/HBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 12
 text = "(32ms)"
 
-[node name="KickButton" type="Button" parent="HBoxContainer"]
+[node name="KickButton" type="Button" parent="MarginContainer/HBoxContainer"]
 layout_mode = 2
+theme_override_font_sizes/font_size = 12
 text = "Kick Player"
