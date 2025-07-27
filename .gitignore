@@ -19,3 +19,6 @@
 
 # Visual Studio
 .vs/
+
+
+.DS_Store
