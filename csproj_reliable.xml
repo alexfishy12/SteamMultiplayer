@@ -1,38 +1,40 @@
 <Project Sdk="Godot.NET.Sdk/4.4.1">
-    <!--
-      Debug target: Prints the detected OS to the build output for troubleshooting.
-    -->
-    <Target Name="Debug" BeforeTargets="Build">
-        <Message Text="Detected OS: '$(OS)'" Importance="high" />
-    </Target>
-
     <!-- Defining build properties -->
     <PropertyGroup>
         <TargetFramework>net8.0</TargetFramework>
         <RootNamespace>SteamMultiplayer</RootNamespace>
         <EnableDynamicLoading>true</EnableDynamicLoading>
-        <GodotProjectRoot>$(MSBuildProjectDirectory)</GodotProjectRoot>
+        <ProjectRoot>$(MSBuildProjectDirectory)</ProjectRoot>
+        <SteamworksTargetPlatform>win-x64</SteamworksTargetPlatform>
         <SteamworksFolder>addons/Steamworks.NET</SteamworksFolder>
     </PropertyGroup>
+
+    <Target Name="ShowProjectVariables" BeforeTargets="Build">
+        <Message Text="Here are all build config variables:" Importance="high" />
+        <Message Text="Detected OS: '$(OS)'" Importance="high" />
+        <Message Text="SteamworksTargetPlatform: '$(SteamworksTargetPlatform)'" Importance="high"></Message>
+        <Message Text="Project Root: '$(ProjectRoot)'" Importance="high" />
+        <Message Text="Steamworks Folder: '$(SteamworksFolder)'" Importance="high" />
+    </Target>
 
     <!-- Defining variables for platform specific builds -->
 
     <!-- Windows-x64 -->
-    <PropertyGroup Condition=" '$(OS)' == 'Windows_NT' ">
+    <PropertyGroup Condition=" '$(SteamworksTargetPlatform)' == 'win-x64' ">
         <PlatformFolder>$(SteamworksFolder)/Windows-x64</PlatformFolder>
         <SteamworksNativeLib>$(PlatformFolder)/steam_api64.dll</SteamworksNativeLib>
         <SteamworksNativeLink>steam_api64.dll</SteamworksNativeLink>
     </PropertyGroup>
 
     <!-- Linux-x64 -->
-    <PropertyGroup Condition=" '$(RuntimeIdentifier)' == 'linux-x64' ">
+    <PropertyGroup Condition=" '$(SteamworksTargetPlatform)' == 'linux-x64' ">
         <PlatformFolder>$(SteamworksFolder)/OSX-Linux-x64</PlatformFolder>
         <SteamworksNativeLib>$(PlatformFolder)/libsteam_api.so</SteamworksNativeLib>
         <SteamworksNativeLink>libsteam_api.so</SteamworksNativeLink>
     </PropertyGroup>
 
     <!-- macOS ARM64 -->
-    <PropertyGroup Condition=" '$(RuntimeIdentifier)' == 'osx-arm64' ">
+    <PropertyGroup Condition=" '$(SteamworksTargetPlatform)' == 'osx-arm64' ">
         <PlatformFolder>$(SteamworksFolder)/OSX-Linux-x64</PlatformFolder>
         <SteamworksNativeLib>$(PlatformFolder)/steam_api.bundle/Contents/MacOS/libsteam_api.dylib</SteamworksNativeLib>
         <SteamworksNativeLink>libsteam_api.dylib</SteamworksNativeLink>
@@ -55,7 +57,7 @@
           - Copies the native steam_api64.dll to the output and publish directories for builds.
         -->
 
-    <ItemGroup Condition=" '$(OS)' == 'Windows_NT' ">
+    <ItemGroup Condition=" '$(SteamworksTargetPlatform)' == 'win-x64' ">
         <Reference Include="Steamworks.NET" HintPath="$(SteamworksFolder)/Windows-x64/Steamworks.NET.dll" />
         <!-- Ensures steam_api64.dll is available in output/publish directories for running the built game. -->
         <Content Include="$(SteamworksFolder)/Windows-x64/steam_api64.dll">
@@ -71,9 +73,9 @@
               If this DLL is not present at the project root, running the game from the Godot editor will throw DLL not found errors.
               This DLL is a duplicate of the same DLL copied to the build output as configured above for Windows 
             -->
-    <Target Name="CopySteamAPILibraryWindows" BeforeTargets="Build" Condition=" '$(OS)' == 'Windows_NT' ">
+    <Target Name="CopySteamAPILibraryWindows" BeforeTargets="Build" Condition=" '$(SteamworksTargetPlatform)' == 'win-x64' ">
         <Message Text="Copying SteamAPILibrary for Windows platform..." Importance="high" />
-        <Copy SourceFiles="$(SteamworksFolder)/Windows-x64/steam_api64.dll" DestinationFolder="$(GodotProjectRoot)" />
+        <Copy SourceFiles="$(SteamworksFolder)/Windows-x64/steam_api64.dll" DestinationFolder="$(ProjectRoot)" />
         <Message Text="SteamAPILibrary for Windows copied to project root directory." Importance="high" />
     </Target>
 
@@ -83,19 +85,19 @@
           - Copies the appropriate native libraries to the output directory for builds.
         -->
 
-        <ItemGroup Condition=" '$(OS)' == 'Unix' ">
-            <Reference Include="Steamworks.NET" HintPath="$(SteamworksFolder)/OSX-Linux-x64/Steamworks.NET.dll" />
-            <!-- macOS dylib -->
-            <Content Include="$(SteamworksFolder)/OSX-Linux-x64/steam_api.bundle/Contents/MacOS/libsteam_api.dylib">
-                <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-                <Link>libsteam_api.dylib</Link>
-            </Content>
-            <!-- Linux so -->
-            <Content Include="$(SteamworksFolder)/OSX-Linux-x64/libsteam_api.so">
-                <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-                <Link>libsteam_api.so</Link>
-            </Content>
-        </ItemGroup>
+    <ItemGroup Condition=" '$(OS)' == 'Unix' ">
+        <Reference Include="Steamworks.NET" HintPath="$(SteamworksFolder)/OSX-Linux-x64/Steamworks.NET.dll" />
+        <!-- macOS dylib -->
+        <Content Include="$(SteamworksFolder)/OSX-Linux-x64/steam_api.bundle/Contents/MacOS/libsteam_api.dylib">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+            <Link>libsteam_api.dylib</Link>
+        </Content>
+        <!-- Linux so -->
+        <Content Include="$(SteamworksFolder)/OSX-Linux-x64/libsteam_api.so">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+            <Link>libsteam_api.so</Link>
+        </Content>
+    </ItemGroup>
 
     <!--
         Custom target: Copies the Unix native libraries to the project root before build.
@@ -103,8 +105,8 @@
     -->
     <Target Name="CopySteamAPILibraryUnix" BeforeTargets="Build" Condition=" '$(OS)' == 'Unix' ">
         <Message Text="Copying SteamAPILibrary for UNIX platform..." Importance="high" />
-        <Copy SourceFiles="$(SteamworksFolder)/OSX-Linux-x64/steam_api.bundle/Contents/MacOS/libsteam_api.dylib" DestinationFolder="$(GodotProjectRoot)" />
-        <Copy SourceFiles="$(SteamworksFolder)/OSX-Linux-x64/libsteam_api.so" DestinationFolder="$(GodotProjectRoot)" />
+        <Copy SourceFiles="$(SteamworksFolder)/OSX-Linux-x64/steam_api.bundle/Contents/MacOS/libsteam_api.dylib" DestinationFolder="$(ProjectRoot)" />
+        <Copy SourceFiles="$(SteamworksFolder)/OSX-Linux-x64/libsteam_api.so" DestinationFolder="$(ProjectRoot)" />
         <Message Text="SteamAPILibrary for UNIX copied to project root directory." Importance="high" />
     </Target>
 

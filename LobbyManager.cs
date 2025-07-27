@@ -81,14 +81,6 @@ public partial class LobbyManager : Node2D
         var call = SteamMatchmaking.JoinLobby(lobbyId);
         m_LobbyEnter = CallResult<LobbyEnter_t>.Create(OnLobbyEntered);
         m_LobbyEnter.Set(call);
-        if (true)
-        {
-            GD.Print("Joined lobby successfully.");
-        }
-        else
-        {
-            GD.PrintErr("Failed to join lobby.");
-        }
     }
 
     private void OnLobbyEntered(LobbyEnter_t result, bool bIOFailure)
