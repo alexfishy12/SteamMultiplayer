@@ -3,15 +3,13 @@
     <PropertyGroup>
         <TargetFramework>net8.0</TargetFramework>
         <RootNamespace>SteamMultiplayer</RootNamespace>
-        <EnableDynamicLoading>true</EnableDynamicLoading>
         <ProjectRoot>$(MSBuildProjectDirectory)</ProjectRoot>
-        <SteamworksTargetPlatform>osx-arm64</SteamworksTargetPlatform>
+        <SteamworksTargetPlatform>win-x64</SteamworksTargetPlatform>
         <SteamworksFolder>addons/Steamworks.NET</SteamworksFolder>
     </PropertyGroup>
 
     <Target Name="ShowProjectVariables" BeforeTargets="Build">
         <Message Text="Here are all build config variables:" Importance="high" />
-        <Message Text="Detected OS: '$(OS)'" Importance="high" />
         <Message Text="SteamworksTargetPlatform: '$(SteamworksTargetPlatform)'" Importance="high" />
         <Message Text="Project Root: '$(ProjectRoot)'" Importance="high" />
         <Message Text="Steamworks Folder: '$(SteamworksFolder)'" Importance="high" />
@@ -39,7 +37,7 @@
         <SteamworksNativeLink>libsteam_api.so</SteamworksNativeLink>
     </PropertyGroup>
 
-    <!-- Platform-independent filename mapping -->
+    <!-- Get platform-dependent version of Steamworks.NET.dll -->
     <PropertyGroup>
         <SteamworksNETDLL>$(PlatformFolder)/Steamworks.NET.dll</SteamworksNETDLL>
     </PropertyGroup>
