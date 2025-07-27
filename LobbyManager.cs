@@ -10,7 +10,7 @@ public partial class LobbyManager : Node2D
     private CallResult<LobbyCreated_t> m_LobbyCreated;
     private CallResult<LobbyMatchList_t> m_LobbyMatchList;
     private CallResult<LobbyEnter_t> m_LobbyEnter;
-    private CallResult<PersonaStateChange_t> m_PersonaStateChange;
+    private Callback<PersonaStateChange_t> m_PersonaStateChange;
 
     public event Action<Lobby> LobbyLeft;
     public event Action<Lobby> LobbyJoined;
@@ -34,6 +34,7 @@ public partial class LobbyManager : Node2D
         Instance = this;
 
         CurrentPlayer = new LobbyMember(SteamUser.GetSteamID(), SteamFriends.GetPersonaName());
+        m_PersonaStateChange = Callback<PersonaStateChange_t>.Create(OnPersonaStateChanged);
 
         GD.Print("LobbyManager initialized successfully.");
     }
@@ -157,30 +158,19 @@ public partial class LobbyManager : Node2D
                     continue;
                 }
 
-                // Request persona info if not available
-                if (!SteamFriends.RequestUserInformation(memberId, false))
-                {
-                    GD.Print($"Persona info for {memberId.m_SteamID} not yet available.");
-                    continue;
-                }
-
                 if (memberId == SteamUser.GetSteamID())
                 {
-                    GD.Print("This is the current user, skipping.");
-                    LobbyMemberList.Add(CurrentPlayer);
-                    continue; // Skip the current user
+                    GD.Print("Skipping self in lobby member list.");
+                    continue; // Skip self
                 }
-                string memberPersonaName = SteamFriends.GetFriendPersonaName(memberId);
-                LobbyMemberList.Add(new LobbyMember(memberId, memberPersonaName));
-                GD.Print($"Member {i}: ID = {memberId.m_SteamID}, Name = {memberPersonaName}");
+
+                SteamFriends.RequestUserInformation(memberId, false);
             }
             catch (Exception ex)
             {
                 GD.PrintErr($"Exception in GetLobbyMembers loop: {ex}");
             }
         }
-
-        LobbyMembersUpdated?.Invoke(LobbyMemberList);
     }
 
     //public void KickPlayer(ulong playerId)
@@ -202,16 +192,12 @@ public partial class LobbyManager : Node2D
     //    }
     //}
 
-    private void OnPersonaStateChanged(PersonaStateChange_t result, bool bIOFailure)
+    private void OnPersonaStateChanged(PersonaStateChange_t result)
     {
-        if (bIOFailure)
-        {
-            GD.PrintErr("Failed to get persona state due to IO failure.");
-            return;
-        }
         CSteamID memberId = new CSteamID(result.m_ulSteamID);
         GD.Print($"Persona state changed for member ID: {memberId.m_SteamID}");
         GD.Print($"Member Name: {SteamFriends.GetFriendPersonaName(memberId)}");
 
+        LobbyMembersUpdated?.Invoke(LobbyMemberList);
     }
 }
