@@ -1,0 +1,72 @@
+<Project Sdk="Godot.NET.Sdk/4.4.1">
+    <!--
+      Debug target: Prints the detected OS to the build output for troubleshooting.
+    -->
+    <Target Name="Debug" BeforeTargets="Build">
+        <Message Text="Detected OS: '$(RuntimeIdentifier)'" Importance="high" />
+    </Target>
+
+    <!-- Defining build properties -->
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <EnableDynamicLoading>true</EnableDynamicLoading>
+        <GodotProjectRoot>$(MSBuildProjectDirectory)</GodotProjectRoot>
+
+        <!-- Project-specific variables -->
+        <RootNamespace>SteamMultiplayer</RootNamespace>
+        <SteamworksFolder>addons/Steamworks.NET</SteamworksFolder>
+        <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    </PropertyGroup>
+
+    <!-- Defining variables for platform specific builds -->
+
+    <!-- Windows-x64 -->
+    <PropertyGroup Condition=" '$(RuntimeIdentifier)' == 'win-x64' ">
+        <PlatformFolder>$(SteamworksFolder)/Windows-x64</PlatformFolder>
+        <SteamworksNativeLib>$(PlatformFolder)/steam_api64.dll</SteamworksNativeLib>
+        <SteamworksNativeLink>steam_api64.dll</SteamworksNativeLink>
+    </PropertyGroup>
+
+    <!-- macOS ARM64 -->
+    <PropertyGroup Condition=" '$(RuntimeIdentifier)' == 'osx-arm64' ">
+        <PlatformFolder>$(SteamworksFolder)/OSX-Linux-x64</PlatformFolder>
+        <SteamworksNativeLib>$(PlatformFolder)/steam_api.bundle/Contents/MacOS/libsteam_api.dylib</SteamworksNativeLib>
+        <SteamworksNativeLink>libsteam_api.dylib</SteamworksNativeLink>
+    </PropertyGroup>
+
+    <!-- Linux-x64 -->
+    <PropertyGroup Condition=" '$(RuntimeIdentifier)' == 'linux-x64' ">
+        <PlatformFolder>$(SteamworksFolder)/OSX-Linux-x64</PlatformFolder>
+        <SteamworksNativeLib>$(PlatformFolder)/libsteam_api.so</SteamworksNativeLib>
+        <SteamworksNativeLink>libsteam_api.so</SteamworksNativeLink>
+    </PropertyGroup>
+
+    <!-- Platform-independent filename mapping -->
+    <PropertyGroup>
+        <SteamworksNETDLL>$(PlatformFolder)/Steamworks.NET.dll</SteamworksNETDLL>
+    </PropertyGroup>
+
+    <Target Name="ShowSteamworksPath" BeforeTargets="Build">
+        <Message Text="SteamworksNETDLL: '$(SteamworksNETDLL)'" Importance="high" />
+    </Target>
+
+    <!--
+      Steamworks.NET integration:
+      - References the correct Steamworks.NET managed DLL for each platform (Windows, Linux/OSX).
+      - Handles copying of native libraries for both build output/publish and project root (for testing).
+    -->
+    <ItemGroup Condition=" '$(SteamworksNativeLib)' != '' ">
+        <Reference Include="Steamworks.NET" HintPath="$(SteamworksNETDLL)"></Reference>
+        <Content Include="$(SteamworksNativeLib)">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+            <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+            <Link>$(SteamworksNativeLink)</Link>
+        </Content>
+    </ItemGroup>
+
+    <Target Name="CopyDevelopmentDLLs" BeforeTargets="Build" Condition=" '$(SteamworksNativeLib' != '' ">
+        <Message Text="Platform-specific Steamworks.NET API for $(RuntimeIdentifier) will be copied to project root directory." Importance="high" />
+        <Copy SourceFiles="$(SteamworksNativeLib)" DestinationFolder="$(GodotProjectRoot)" />
+        <Message Text="Copied '$(SteamworksNativeLink)' into '$(GodotProjectRoot)'..." Importance="high" />
+    </Target>
+</Project>
