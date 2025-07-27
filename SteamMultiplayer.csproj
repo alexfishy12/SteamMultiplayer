@@ -4,8 +4,8 @@
         <TargetFramework>net8.0</TargetFramework>
         <RootNamespace>SteamMultiplayer</RootNamespace>
         <ProjectRoot>$(MSBuildProjectDirectory)</ProjectRoot>
-        <SteamworksTargetPlatform>win-x64</SteamworksTargetPlatform>
         <SteamworksFolder>addons/Steamworks.NET</SteamworksFolder>
+        <SteamworksTargetPlatform>win-x64</SteamworksTargetPlatform> <!-- Options: [win-x64, linux-x64, osx-arm64]-->
     </PropertyGroup>
 
     <Target Name="ShowProjectVariables" BeforeTargets="Build">
