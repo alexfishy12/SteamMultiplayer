@@ -1,0 +1,25 @@
+[gd_scene load_steps=2 format=3 uid="uid://4wwqli7y6s73"]
+
+[ext_resource type="Script" uid="uid://igqfthopar05" path="res://PlayerListItem.cs" id="1_piyk5"]
+
+[node name="PlayerListItem" type="PanelContainer" node_paths=PackedStringArray("nameLabel", "pingLabel", "kickButton")]
+script = ExtResource("1_piyk5")
+nameLabel = NodePath("HBoxContainer/PlayerNameLabel")
+pingLabel = NodePath("HBoxContainer/PingLabel")
+kickButton = NodePath("HBoxContainer/KickButton")
+
+[node name="HBoxContainer" type="HBoxContainer" parent="."]
+layout_mode = 2
+
+[node name="PlayerNameLabel" type="Label" parent="HBoxContainer"]
+layout_mode = 2
+text = "Distort"
+
+[node name="PingLabel" type="Label" parent="HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "(32ms)"
+
+[node name="KickButton" type="Button" parent="HBoxContainer"]
+layout_mode = 2
+text = "Kick Player"

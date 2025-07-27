@@ -1,0 +1,25 @@
+[gd_scene load_steps=2 format=3 uid="uid://bs08wcister6v"]
+
+[ext_resource type="Script" uid="uid://dp28sas23rhh" path="res://LobbyListItem.cs" id="1_l8xxa"]
+
+[node name="LobbyListItem" type="PanelContainer" node_paths=PackedStringArray("nameLabel", "pingLabel", "joinButton")]
+script = ExtResource("1_l8xxa")
+nameLabel = NodePath("HBoxContainer/LobbyId")
+pingLabel = NodePath("HBoxContainer/LobbyPing")
+joinButton = NodePath("HBoxContainer/JoinButton")
+
+[node name="HBoxContainer" type="HBoxContainer" parent="."]
+layout_mode = 2
+
+[node name="LobbyId" type="Label" parent="HBoxContainer"]
+layout_mode = 2
+text = "Lobby 1"
+
+[node name="LobbyPing" type="Label" parent="HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "(32ms)"
+
+[node name="JoinButton" type="Button" parent="HBoxContainer"]
+layout_mode = 2
+text = "Join Lobby"

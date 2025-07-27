@@ -1,4 +1,24 @@
-# Godot 4+ specific ignores
+### Godot 4+ specific ignores
 .godot/
+
+# Godot Build artifacts
 /android/
+
+### Ignore OS-Specific DLL reference files 
+
+# Steamworks.NET
+/*.dylib
+/*.so
+/*.dll
+
+### IDE specific files
+
+# JetBrains
+.idea/
+.editorconfig
+
+# Visual Studio
 .vs/
+
+
+.DS_Store
