@@ -2,6 +2,7 @@ using Godot;
 using System;
 using Steamworks;
 using System.Collections.Generic;
+using System.Linq;
 
 public partial class LobbyManager : Node2D
 {
@@ -21,7 +22,7 @@ public partial class LobbyManager : Node2D
     public Lobby CurrentLobby;
 
     private List<Lobby> LobbyList = new();
-    private List<LobbyMember> LobbyMemberList = new();
+    private Dictionary<CSteamID, LobbyMember> LobbyMemberList = new();
 
 
     public override void _Ready()
@@ -132,8 +133,8 @@ public partial class LobbyManager : Node2D
 
     public void GetLobbyMembers()
     {
-        if (CurrentLobby == null) 
-        { 
+        if (CurrentLobby == null)
+        {
             GD.Print("No active lobby to get members from.");
             return;
         }
@@ -194,10 +195,42 @@ public partial class LobbyManager : Node2D
 
     private void OnPersonaStateChanged(PersonaStateChange_t result)
     {
-        CSteamID memberId = new CSteamID(result.m_ulSteamID);
-        GD.Print($"Persona state changed for member ID: {memberId.m_SteamID}");
-        GD.Print($"Member Name: {SteamFriends.GetFriendPersonaName(memberId)}");
+        try
+        {
+            CSteamID memberId = new CSteamID(result.m_ulSteamID);
+            string personaName;
+            GD.Print($"Persona state changed for member ID: {memberId.m_SteamID}");
 
-        LobbyMembersUpdated?.Invoke(LobbyMemberList);
+            if (!memberId.IsValid())
+            {
+                GD.PrintErr($"Invalid memberId in OnPersonaStateChanged: {memberId.m_SteamID}");
+                return;
+            }
+            if (memberId == SteamUser.GetSteamID())
+            {
+                personaName = SteamFriends.GetPersonaName();
+            }
+            else
+            {
+                personaName = SteamFriends.GetFriendPersonaName(memberId);
+            }
+            if (!LobbyMemberList.ContainsKey(memberId))
+            {
+                LobbyMemberList[memberId] = new LobbyMember(memberId, personaName);
+                GD.Print($"Added new member to LobbyMemberList: {memberId.m_SteamID}");
+            }
+            else
+            {
+                LobbyMemberList[memberId].Name = personaName;
+                GD.Print($"Updated existing member '{LobbyMemberList[memberId].Name}'. in LobbyMemberList.");
+            }
+
+            LobbyMembersUpdated?.Invoke(LobbyMemberList.Values.ToList());
+        }
+        catch (Exception ex)
+        {
+            GD.PrintErr($"Exception in OnPersonaStateChanged: {ex}");
+            return;
+        }
     }
 }
