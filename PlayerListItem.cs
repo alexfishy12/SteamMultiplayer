@@ -1,7 +1,7 @@
 using Godot;
 using System;
 
-public partial class PlayerrListItem : PanelContainer
+public partial class PlayerListItem : PanelContainer
 {
     [Export] private Label nameLabel;
     [Export] private Label pingLabel;

@@ -5,14 +5,14 @@
         <RootNamespace>SteamMultiplayer</RootNamespace>
         <EnableDynamicLoading>true</EnableDynamicLoading>
         <ProjectRoot>$(MSBuildProjectDirectory)</ProjectRoot>
-        <SteamworksTargetPlatform>win-x64</SteamworksTargetPlatform>
+        <SteamworksTargetPlatform>osx-arm64</SteamworksTargetPlatform>
         <SteamworksFolder>addons/Steamworks.NET</SteamworksFolder>
     </PropertyGroup>
 
     <Target Name="ShowProjectVariables" BeforeTargets="Build">
         <Message Text="Here are all build config variables:" Importance="high" />
         <Message Text="Detected OS: '$(OS)'" Importance="high" />
-        <Message Text="SteamworksTargetPlatform: '$(SteamworksTargetPlatform)'" Importance="high"></Message>
+        <Message Text="SteamworksTargetPlatform: '$(SteamworksTargetPlatform)'" Importance="high" />
         <Message Text="Project Root: '$(ProjectRoot)'" Importance="high" />
         <Message Text="Steamworks Folder: '$(SteamworksFolder)'" Importance="high" />
     </Target>
@@ -51,7 +51,7 @@
     
     <!-- Include Steamworks platform-specific native libraries in the build output -->
     <ItemGroup Condition=" '$(SteamworksNativeLib)' != '' ">
-        <Reference Include="Steamworks.NET" HintPath="$(SteamworksNETDLL)"></Reference>
+        <Reference Include="Steamworks.NET" HintPath="$(SteamworksNETDLL)" />
         <Content Include="$(SteamworksNativeLib)">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
             <CopyToPublishDirectory>Always</CopyToPublishDirectory>
