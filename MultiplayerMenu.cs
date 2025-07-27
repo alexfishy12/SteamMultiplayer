@@ -69,15 +69,18 @@ public partial class MultiplayerMenu : Control
 
     private void OnLobbyMembersUpdated(List<LobbyMember> members)
     {
-        GD.Print("Lobby members updated.");
         ClearMemberList(); // Clear previous members
+        GD.Print($"Updating lobby members UI...");
         foreach (LobbyMember member in members)
         {
+            GD.Print($"Adding player to UI: {member}");
             PlayerListItem playerItem = playerListItemScene.Instantiate<PlayerListItem>();
             playerItem.PlayerName = member.Name;
             playerItem.playerId = member.Id.m_SteamID;
             playerList.AddChild(playerItem);
+
         }
+        GD.Print("Lobby members UI updated.");
     }
 
     private void OnLobbyLeft(Lobby lobby)
@@ -94,7 +97,7 @@ public partial class MultiplayerMenu : Control
 
     private void ClearLobbyList()
     {
-        GD.Print("Clearing member list.");
+        GD.Print("Clearing lobby list.");
         foreach (Node child in lobbyList.GetChildren())
         {
             child.QueueFree();

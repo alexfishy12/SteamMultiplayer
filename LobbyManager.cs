@@ -21,7 +21,7 @@ public partial class LobbyManager : Node2D
     public LobbyMember CurrentPlayer;
     public Lobby CurrentLobby;
 
-    private List<Lobby> LobbyList = new();
+    private Dictionary<CSteamID, Lobby> LobbyList = new();
     private Dictionary<CSteamID, LobbyMember> LobbyMemberList = new();
 
 
@@ -34,7 +34,9 @@ public partial class LobbyManager : Node2D
         }
         Instance = this;
 
-        CurrentPlayer = new LobbyMember(SteamUser.GetSteamID(), SteamFriends.GetPersonaName());
+        CurrentPlayer = new LobbyMember(SteamUser.GetSteamID());
+        CurrentPlayer.Name = SteamFriends.GetPersonaName();
+
         m_PersonaStateChange = Callback<PersonaStateChange_t>.Create(OnPersonaStateChanged);
 
         GD.Print("LobbyManager initialized successfully.");
@@ -87,7 +89,7 @@ public partial class LobbyManager : Node2D
             GD.Print($"Lobby {i}: ID = {LobbyId.m_SteamID}");
             CSteamID OwnerId = new CSteamID(ulong.Parse(SteamMatchmaking.GetLobbyData(LobbyId, nameof(Lobby.OwnerId))));
             string OwnerName = SteamMatchmaking.GetLobbyData(LobbyId, nameof(Lobby.OwnerName));
-            LobbyList.Add(new Lobby(LobbyId, OwnerId, OwnerName));
+            LobbyList[LobbyId] = new Lobby(LobbyId, OwnerId, OwnerName);
         }
 
         if (result.m_nLobbiesMatching == 0)
@@ -95,7 +97,7 @@ public partial class LobbyManager : Node2D
             GD.Print("No lobbies found. You may want to create one, or search again.");
         }
 
-        LobbyListUpdated?.Invoke(LobbyList);
+        LobbyListUpdated?.Invoke(LobbyList.Values.ToList());
     }
 
     public void JoinLobby(CSteamID lobbyId)
@@ -110,6 +112,7 @@ public partial class LobbyManager : Node2D
         SteamMatchmaking.LeaveLobby(CurrentLobby.Id);
         LobbyLeft?.Invoke(CurrentLobby);
         CurrentLobby = null; // Clear the current lobby reference
+        LobbyMemberList.Clear();
     }
 
     private void OnLobbyEntered(LobbyEnter_t result, bool bIOFailure)
@@ -138,8 +141,6 @@ public partial class LobbyManager : Node2D
             GD.Print("No active lobby to get members from.");
             return;
         }
-        LobbyMemberList.Clear(); // Clear previous members
-
 
         GD.Print($"Getting members for lobby ID: {CurrentLobby.Id}");
         int numMembers = SteamMatchmaking.GetNumLobbyMembers(CurrentLobby.Id);
@@ -151,7 +152,6 @@ public partial class LobbyManager : Node2D
             try
             {
                 CSteamID memberId = SteamMatchmaking.GetLobbyMemberByIndex(CurrentLobby.Id, i);
-                GD.Print($"memberId: {memberId.m_SteamID}, IsValid: {memberId.IsValid()}");
 
                 if (!memberId.IsValid())
                 {
@@ -159,13 +159,18 @@ public partial class LobbyManager : Node2D
                     continue;
                 }
 
-                if (memberId == SteamUser.GetSteamID())
+                if (!LobbyMemberList.ContainsKey(memberId))
                 {
-                    GD.Print("Skipping self in lobby member list.");
-                    continue; // Skip self
+                    LobbyMemberList[memberId] = new LobbyMember(memberId);
                 }
 
-                SteamFriends.RequestUserInformation(memberId, false);
+                if (!SteamFriends.RequestUserInformation(memberId, false))
+                {
+                    GD.Print("We already have all the details for memberId: " + memberId.m_SteamID);
+                    continue;
+                }
+                
+                GD.Print("Requesting user information for memberId: " + memberId.m_SteamID);
             }
             catch (Exception ex)
             {
@@ -174,38 +179,26 @@ public partial class LobbyManager : Node2D
         }
     }
 
-    //public void KickPlayer(ulong playerId)
-    //{
-    //    if (CurrentLobby == null)
-    //    {
-    //        GD.PrintErr("No active lobby to kick player from.");
-    //        return;
-    //    }
-    //    CSteamID memberId = new CSteamID(playerId);
-    //    if (SteamMatchmaking.KickMemberFromLobby(CurrentLobby.Id, memberId))
-    //    {
-    //        GD.Print($"Successfully kicked player with ID: {playerId} from lobby {CurrentLobby.Id}");
-    //        GetLobbyMembers(); // Refresh the member list after kicking
-    //    }
-    //    else
-    //    {
-    //        GD.PrintErr($"Failed to kick player with ID: {playerId} from lobby {CurrentLobby.Id}");
-    //    }
-    //}
-
     private void OnPersonaStateChanged(PersonaStateChange_t result)
     {
         try
         {
             CSteamID memberId = new CSteamID(result.m_ulSteamID);
             string personaName;
-            GD.Print($"Persona state changed for member ID: {memberId.m_SteamID}");
+            GD.Print($"OnPersonaStateChanged called for memberId: {memberId.m_SteamID}");
 
             if (!memberId.IsValid())
             {
                 GD.PrintErr($"Invalid memberId in OnPersonaStateChanged: {memberId.m_SteamID}");
                 return;
             }
+
+            if (!LobbyMemberList.ContainsKey(memberId))
+            {
+                GD.Print($"Member ID {memberId.m_SteamID} not found in LobbyMemberList. Skipping update.");
+                return;
+            }
+
             if (memberId == SteamUser.GetSteamID())
             {
                 personaName = SteamFriends.GetPersonaName();
@@ -214,16 +207,9 @@ public partial class LobbyManager : Node2D
             {
                 personaName = SteamFriends.GetFriendPersonaName(memberId);
             }
-            if (!LobbyMemberList.ContainsKey(memberId))
-            {
-                LobbyMemberList[memberId] = new LobbyMember(memberId, personaName);
-                GD.Print($"Added new member to LobbyMemberList: {memberId.m_SteamID}");
-            }
-            else
-            {
-                LobbyMemberList[memberId].Name = personaName;
-                GD.Print($"Updated existing member '{LobbyMemberList[memberId].Name}'. in LobbyMemberList.");
-            }
+
+            LobbyMemberList[memberId].Name = personaName;
+            GD.Print($"Updated member '{LobbyMemberList[memberId].Name}' in LobbyMemberList.");
 
             LobbyMembersUpdated?.Invoke(LobbyMemberList.Values.ToList());
         }

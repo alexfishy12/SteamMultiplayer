@@ -2,23 +2,22 @@ using Steamworks;
 
 public class LobbyMember
 {
-    public CSteamID Id { get; set; }
-    public string Name { get; set; }
-    public int points { get; set; }
-    public int Rank { get; set; }
-    public int Kills { get; set; }
-    public int Deaths { get; set; }
-    public int Assists { get; set; }
-    public int Ping { get; set; }
-    public ulong CreatedAt { get; set; }
-    public ulong UpdatedAt { get; set; }
+    public CSteamID Id { get; set; } = CSteamID.Nil;
+    public string Name { get; set; } = "Anonymous";
+    public int points { get; set; } = 0;
+    public int Rank { get; set; } = 0;
+    public int Kills { get; set; } = 0;
+    public int Deaths { get; set; } = 0;
+    public int Assists { get; set; } = 0;
+    public int Ping { get; set; } = 0;
 
-
-    public LobbyMember(CSteamID Id, string Name)
+    public LobbyMember(CSteamID Id)
     {
         this.Id = Id;
-        this.Name = Name;
     }
 
-
+    public override string ToString()
+    {
+        return $"LobbyMember: {Name} (ID: {Id}, Points: {points}, Rank: {Rank}, Kills: {Kills}, Deaths: {Deaths})";
+    }
 }
