@@ -55,7 +55,6 @@ public partial class MultiplayerMenu : Control
             GD.Print($"Lobby found: {lobby.Name} (ID: {lobby.Id})");
             lobbyListItem.LobbyId = lobby.Id;
             lobbyListItem.LobbyName = lobby.Name;
-            lobbyListItem.Ping = lobby.Ping.ToString(); // Assuming you have a way to get the ping
             lobbyList.AddChild(lobbyListItem);
         }
     }
@@ -72,7 +71,7 @@ public partial class MultiplayerMenu : Control
     {
         GD.Print("Lobby members updated.");
         ClearMemberList(); // Clear previous members
-        foreach (var member in members)
+        foreach (LobbyMember member in members)
         {
             PlayerListItem playerItem = playerListItemScene.Instantiate<PlayerListItem>();
             playerItem.PlayerName = member.Name;

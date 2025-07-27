@@ -3,25 +3,24 @@ using Steamworks;
 public class Lobby
 {
     public CSteamID Id { get; set; }
-    public string Name { get; set; }
     public CSteamID OwnerId { get; set; }
     public string OwnerName { get; set; }
-    public int MaxMembers { get; set; }
-    public int CurrentMembers { get; set; }
-    public int Ping { get; set; }
-    public string GameMode { get; set; }
-    public string Map { get; set; }
-    public ulong CreatedAt { get; set; }
-    public ulong UpdatedAt { get; set; }
-    public Godot.Collections.Array Members { get; set; }
+    public string Name { get; set; }
 
-
-    public Lobby(CSteamID Id, string Name)
+    public Lobby(CSteamID lobbyId, CSteamID OwnerId, string OwnerName)
     {
-        this.Id = Id;
-        this.Name = Name;
-        Members = new Godot.Collections.Array();
+        this.Id = lobbyId;
+        this.OwnerId = OwnerId;
+        this.OwnerName = OwnerName;
+        this.Name = $"{OwnerName}'s Lobby";
     }
 
+    // pushes the current state of the lobby to Steam
+    public void PushChanges()
+    {
+        SteamMatchmaking.SetLobbyData(Id, nameof(OwnerId), OwnerId.m_SteamID.ToString());
+        SteamMatchmaking.SetLobbyData(Id, nameof(OwnerName), OwnerName);
+        SteamMatchmaking.SetLobbyData(Id, nameof(Name), Name);
+    }
 
 }

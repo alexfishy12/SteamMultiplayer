@@ -53,9 +53,11 @@ public partial class LobbyManager : Node2D
         }
 
         CSteamID lobbyId = new CSteamID(result.m_ulSteamIDLobby);
-        CurrentLobby = new Lobby(lobbyId, $"{CurrentPlayer.Name}'s lobby");
+        CurrentLobby = new Lobby(lobbyId, CurrentPlayer.Id, CurrentPlayer.Name);
+        CurrentLobby.PushChanges();
         GD.Print("Lobby created successfully with ID: " + CurrentLobby.Id);
         LobbyJoined?.Invoke(CurrentLobby);
+        GetLobbyMembers();
     }
 
     public void SearchLobbies()
@@ -79,10 +81,11 @@ public partial class LobbyManager : Node2D
         GD.Print($"Found {result.m_nLobbiesMatching} lobbies.");
         for (int i = 0; i < result.m_nLobbiesMatching; i++)
         {
-            CSteamID lobbyId = SteamMatchmaking.GetLobbyByIndex(i);
-            GD.Print($"Lobby {i}: ID = {lobbyId.m_SteamID}");
-
-            LobbyList.Add(new Lobby(lobbyId, SteamMatchmaking.GetLobbyData(lobbyId, "name")));
+            CSteamID LobbyId = SteamMatchmaking.GetLobbyByIndex(i);
+            GD.Print($"Lobby {i}: ID = {LobbyId.m_SteamID}");
+            CSteamID OwnerId = new CSteamID(ulong.Parse(SteamMatchmaking.GetLobbyData(LobbyId, nameof(Lobby.OwnerId))));
+            string OwnerName = SteamMatchmaking.GetLobbyData(LobbyId, nameof(Lobby.OwnerName));
+            LobbyList.Add(new Lobby(LobbyId, OwnerId, OwnerName));
         }
 
         if (result.m_nLobbiesMatching == 0)
@@ -115,11 +118,12 @@ public partial class LobbyManager : Node2D
             return;
         }
 
-        CSteamID _lobbyId = new CSteamID(result.m_ulSteamIDLobby); // ulSteamIDLobby is the ID of the lobby we just joined
-        GD.Print($"Successfully joined lobby with ID: {_lobbyId}");
-        CurrentLobby = new Lobby(_lobbyId, SteamMatchmaking.GetLobbyData(_lobbyId, "name"));
-        CurrentLobby.OwnerId = SteamMatchmaking.GetLobbyOwner(_lobbyId);
-        CurrentLobby.OwnerName = SteamFriends.GetFriendPersonaName(CurrentLobby.OwnerId);
+        CSteamID LobbyId = new CSteamID(result.m_ulSteamIDLobby); // ulSteamIDLobby is the ID of the lobby we just joined
+        CSteamID OwnerId = new CSteamID(ulong.Parse(SteamMatchmaking.GetLobbyData(LobbyId, nameof(Lobby.OwnerId))));
+        string OwnerName = SteamMatchmaking.GetLobbyData(LobbyId, nameof(Lobby.OwnerName));
+        CurrentLobby = new Lobby(LobbyId, OwnerId, OwnerName);
+
+        GD.Print($"Joined lobby successfully: {CurrentLobby.Name} (ID: {CurrentLobby.Id})");
 
         LobbyJoined?.Invoke(CurrentLobby); // Here you can update the UI or notify other parts of your game that the lobby has been joined
         GetLobbyMembers(); // Fetch members of the lobby after joining
@@ -142,9 +146,38 @@ public partial class LobbyManager : Node2D
 
         for (int i = 0; i < numMembers; i++)
         {
-            CSteamID memberId = SteamMatchmaking.GetLobbyMemberByIndex(CurrentLobby.Id, i);
-            string memberPersonaName = SteamFriends.GetFriendPersonaName(memberId);
-            LobbyMemberList.Add(new LobbyMember(memberId, memberPersonaName));
+            try
+            {
+                CSteamID memberId = SteamMatchmaking.GetLobbyMemberByIndex(CurrentLobby.Id, i);
+                GD.Print($"memberId: {memberId.m_SteamID}, IsValid: {memberId.IsValid()}");
+
+                if (!memberId.IsValid())
+                {
+                    GD.PrintErr($"Invalid memberId at index {i}");
+                    continue;
+                }
+
+                // Request persona info if not available
+                if (!SteamFriends.RequestUserInformation(memberId, false))
+                {
+                    GD.Print($"Persona info for {memberId.m_SteamID} not yet available.");
+                    continue;
+                }
+
+                if (memberId == SteamUser.GetSteamID())
+                {
+                    GD.Print("This is the current user, skipping.");
+                    LobbyMemberList.Add(CurrentPlayer);
+                    continue; // Skip the current user
+                }
+                string memberPersonaName = SteamFriends.GetFriendPersonaName(memberId);
+                LobbyMemberList.Add(new LobbyMember(memberId, memberPersonaName));
+                GD.Print($"Member {i}: ID = {memberId.m_SteamID}, Name = {memberPersonaName}");
+            }
+            catch (Exception ex)
+            {
+                GD.PrintErr($"Exception in GetLobbyMembers loop: {ex}");
+            }
         }
 
         LobbyMembersUpdated?.Invoke(LobbyMemberList);
