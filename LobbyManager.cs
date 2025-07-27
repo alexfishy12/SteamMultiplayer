@@ -1,6 +1,7 @@
 using Godot;
 using System;
 using Steamworks;
+using System.Collections.Generic;
 
 public partial class LobbyManager : Node2D
 {
@@ -11,9 +12,17 @@ public partial class LobbyManager : Node2D
     private CallResult<LobbyEnter_t> m_LobbyEnter;
     private CallResult<PersonaStateChange_t> m_PersonaStateChange;
 
-    [Signal] public delegate void LobbyFoundEventHandler(ulong lobbyId);
-    [Signal] public delegate void LobbyJoinedEventHandler(ulong lobbyId);
-    private CSteamID _LobbyId;
+    public event Action<Lobby> LobbyLeft;
+    public event Action<Lobby> LobbyJoined;
+    public event Action<List<Lobby>> LobbyListUpdated;
+    public event Action<List<LobbyMember>> LobbyMembersUpdated;
+
+    public LobbyMember CurrentPlayer;
+    public Lobby CurrentLobby;
+
+    private List<Lobby> LobbyList = new();
+    private List<LobbyMember> LobbyMemberList = new();
+
 
     public override void _Ready()
     {
@@ -23,6 +32,9 @@ public partial class LobbyManager : Node2D
             return;
         }
         Instance = this;
+
+        CurrentPlayer = new LobbyMember(SteamUser.GetSteamID(), SteamFriends.GetPersonaName());
+
         GD.Print("LobbyManager initialized successfully.");
     }
     public void CreateLobby()
@@ -40,8 +52,10 @@ public partial class LobbyManager : Node2D
             return;
         }
 
-        _LobbyId = new CSteamID(result.m_ulSteamIDLobby);
-        GD.Print("Lobby created successfully with ID: " + _LobbyId);
+        CSteamID lobbyId = new CSteamID(result.m_ulSteamIDLobby);
+        CurrentLobby = new Lobby(lobbyId, $"{CurrentPlayer.Name}'s lobby");
+        GD.Print("Lobby created successfully with ID: " + CurrentLobby.Id);
+        LobbyJoined?.Invoke(CurrentLobby);
     }
 
     public void SearchLobbies()
@@ -60,20 +74,23 @@ public partial class LobbyManager : Node2D
             return;
         }
 
+        LobbyList.Clear(); // Clear previous results
+
         GD.Print($"Found {result.m_nLobbiesMatching} lobbies.");
         for (int i = 0; i < result.m_nLobbiesMatching; i++)
         {
-            var lobbyId = SteamMatchmaking.GetLobbyByIndex(i);
+            CSteamID lobbyId = SteamMatchmaking.GetLobbyByIndex(i);
             GD.Print($"Lobby {i}: ID = {lobbyId.m_SteamID}");
 
-
-            EmitSignal(SignalName.LobbyFound, lobbyId.m_SteamID);
+            LobbyList.Add(new Lobby(lobbyId, SteamMatchmaking.GetLobbyData(lobbyId, "name")));
         }
 
         if (result.m_nLobbiesMatching == 0)
         {
             GD.Print("No lobbies found. You may want to create one, or search again.");
         }
+
+        LobbyListUpdated?.Invoke(LobbyList);
     }
 
     public void JoinLobby(CSteamID lobbyId)
@@ -81,6 +98,13 @@ public partial class LobbyManager : Node2D
         var call = SteamMatchmaking.JoinLobby(lobbyId);
         m_LobbyEnter = CallResult<LobbyEnter_t>.Create(OnLobbyEntered);
         m_LobbyEnter.Set(call);
+    }
+
+    public void LeaveCurrentLobby()
+    {
+        SteamMatchmaking.LeaveLobby(CurrentLobby.Id);
+        LobbyLeft?.Invoke(CurrentLobby);
+        CurrentLobby = null; // Clear the current lobby reference
     }
 
     private void OnLobbyEntered(LobbyEnter_t result, bool bIOFailure)
@@ -91,42 +115,59 @@ public partial class LobbyManager : Node2D
             return;
         }
 
-        _LobbyId = new CSteamID(result.m_ulSteamIDLobby);
-        GD.Print($"Successfully joined lobby with ID: {_LobbyId}");
-        EmitSignal(SignalName.LobbyJoined, _LobbyId.m_SteamID);
-        GetLobbyMembers();
-        // Here you can update the UI or notify other parts of your game that the lobby has been joined
+        CSteamID _lobbyId = new CSteamID(result.m_ulSteamIDLobby); // ulSteamIDLobby is the ID of the lobby we just joined
+        GD.Print($"Successfully joined lobby with ID: {_lobbyId}");
+        CurrentLobby = new Lobby(_lobbyId, SteamMatchmaking.GetLobbyData(_lobbyId, "name"));
+        CurrentLobby.OwnerId = SteamMatchmaking.GetLobbyOwner(_lobbyId);
+        CurrentLobby.OwnerName = SteamFriends.GetFriendPersonaName(CurrentLobby.OwnerId);
+
+        LobbyJoined?.Invoke(CurrentLobby); // Here you can update the UI or notify other parts of your game that the lobby has been joined
+        GetLobbyMembers(); // Fetch members of the lobby after joining
     }
 
     public void GetLobbyMembers()
     {
-        if (!_LobbyId.IsValid()) 
+        if (CurrentLobby == null) 
         { 
             GD.Print("No active lobby to get members from.");
             return;
         }
+        LobbyMemberList.Clear(); // Clear previous members
 
-        GD.Print($"Getting members for lobby ID: {_LobbyId}");
 
-        int numMembers = SteamMatchmaking.GetNumLobbyMembers(_LobbyId);
+        GD.Print($"Getting members for lobby ID: {CurrentLobby.Id}");
+        int numMembers = SteamMatchmaking.GetNumLobbyMembers(CurrentLobby.Id);
 
         GD.Print($"Number of members in lobby: {numMembers}");
 
         for (int i = 0; i < numMembers; i++)
         {
-            CSteamID memberId = SteamMatchmaking.GetLobbyMemberByIndex(_LobbyId, i);
-
-            SteamFriends.RequestUserInformation(memberId, false);
-
+            CSteamID memberId = SteamMatchmaking.GetLobbyMemberByIndex(CurrentLobby.Id, i);
             string memberPersonaName = SteamFriends.GetFriendPersonaName(memberId);
-            //EPersonaState memberPersonaState = SteamFriends.GetFriendPersonaState(memberId);
-
-
-            GD.Print($"Member {i}: ID = {memberId.m_SteamID}, Name = {memberPersonaName}");
-
-
+            LobbyMemberList.Add(new LobbyMember(memberId, memberPersonaName));
         }
+
+        LobbyMembersUpdated?.Invoke(LobbyMemberList);
     }
+
+    //public void KickPlayer(ulong playerId)
+    //{
+    //    if (CurrentLobby == null)
+    //    {
+    //        GD.PrintErr("No active lobby to kick player from.");
+    //        return;
+    //    }
+    //    CSteamID memberId = new CSteamID(playerId);
+    //    if (SteamMatchmaking.KickMemberFromLobby(CurrentLobby.Id, memberId))
+    //    {
+    //        GD.Print($"Successfully kicked player with ID: {playerId} from lobby {CurrentLobby.Id}");
+    //        GetLobbyMembers(); // Refresh the member list after kicking
+    //    }
+    //    else
+    //    {
+    //        GD.PrintErr($"Failed to kick player with ID: {playerId} from lobby {CurrentLobby.Id}");
+    //    }
+    //}
 
     private void OnPersonaStateChanged(PersonaStateChange_t result, bool bIOFailure)
     {

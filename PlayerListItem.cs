@@ -3,29 +3,27 @@ using System;
 
 public partial class PlayerListItem : PanelContainer
 {
+    [Export] public ulong playerId;
     [Export] private Label nameLabel;
     [Export] private Label pingLabel;
     [Export] private Button kickButton;
 
-    private string _playerName;
     public string PlayerName
     {
-        get => _playerName;
+        get => nameLabel.Text;
         set
         {
-            _playerName = value;
-            nameLabel.Text = _playerName;
+            nameLabel.Text = value;
         }
     }
 
-    private string _ping;
     public string Ping
     {
-        get => _ping;
+        get => pingLabel.Text;
         set
         {
-            _ping = value;
-            UpdatePingUi(_ping);
+            pingLabel.Text = $"({value}ms)";
+            UpdatePingUi(value);
         }
     }
 
@@ -39,13 +37,13 @@ public partial class PlayerListItem : PanelContainer
     {
         // Logic to kick the player from the lobby
         // This could involve calling a method in your lobby manager or network manager
-        GD.Print($"Kicking player: {_playerName}");
+        GD.Print($"[EXPERIMENTAL] Kicking player: {nameLabel.Text}");
         // Example: LobbyManager.Instance.KickPlayer(_playerId);
+        //LobbyManager.Instance.KickPlayer(_playerId);
     }
 
     private void UpdatePingUi(string newPing)
     {
-        pingLabel.Text = $"({_ping}ms)";
         int pingValue = int.Parse(newPing);
         if (pingValue < 50)
         {

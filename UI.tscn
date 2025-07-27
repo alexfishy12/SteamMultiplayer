@@ -6,7 +6,7 @@
 
 [node name="CanvasLayer" type="CanvasLayer"]
 
-[node name="MultiplayerMenu" type="Control" parent="." node_paths=PackedStringArray("mainMenuPanel", "hostGameButton", "joinGameButton", "quitGameButton", "lobbyPanel", "inviteFriendButton", "playerListContainer", "startGameButton", "quitLobbyButton", "joinGamePanel", "searchForLobbiesButton", "lobbyListContainer", "backButton")]
+[node name="MultiplayerMenu" type="Control" parent="." node_paths=PackedStringArray("mainMenuPanel", "hostGameButton", "joinGameButton", "quitGameButton", "lobbyPanel", "lobbyNameLabel", "inviteFriendButton", "playerList", "startGameButton", "quitLobbyButton", "joinGamePanel", "searchForLobbiesButton", "lobbyList", "backButton")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -19,18 +19,20 @@ hostGameButton = NodePath("Main/HBoxContainer/VBoxContainer/Host")
 joinGameButton = NodePath("Main/HBoxContainer/VBoxContainer/Join")
 quitGameButton = NodePath("Main/HBoxContainer/VBoxContainer/QuitGame")
 lobbyPanel = NodePath("Hosting")
+lobbyNameLabel = NodePath("Hosting/HBoxContainer/FirstColumn/LobbyName")
 inviteFriendButton = NodePath("Hosting/HBoxContainer/FirstColumn/Invite a Friend")
-playerListContainer = NodePath("Hosting/HBoxContainer/PanelContainer/SecondColumn/PlayerList")
+playerList = NodePath("Hosting/HBoxContainer/VBoxContainer/PanelContainer/SecondColumn/PlayerList")
 playerListItemScene = ExtResource("2_g6l6n")
 startGameButton = NodePath("Hosting/HBoxContainer/FirstColumn/Start Game")
 quitLobbyButton = NodePath("Hosting/HBoxContainer/FirstColumn/Quit Lobby")
 joinGamePanel = NodePath("Joining")
 searchForLobbiesButton = NodePath("Joining/HBoxContainer/FirstColumn/Search for lobbies")
-lobbyListContainer = NodePath("Joining/HBoxContainer/PanelContainer/SecondColumn/LobbyList")
+lobbyList = NodePath("Joining/HBoxContainer/PanelContainer/SecondColumn/LobbyList")
 lobbyListItemScene = ExtResource("3_qui0h")
 backButton = NodePath("Joining/HBoxContainer/FirstColumn/BackButton")
 
 [node name="Main" type="MarginContainer" parent="MultiplayerMenu"]
+visible = false
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -63,7 +65,6 @@ layout_mode = 2
 text = "Quit Game"
 
 [node name="Hosting" type="MarginContainer" parent="MultiplayerMenu"]
-visible = false
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -83,31 +84,63 @@ alignment = 1
 layout_mode = 2
 size_flags_horizontal = 2
 
+[node name="LobbyName" type="Label" parent="MultiplayerMenu/Hosting/HBoxContainer/FirstColumn"]
+layout_mode = 2
+text = "Lobby Name"
+
 [node name="Quit Lobby" type="Button" parent="MultiplayerMenu/Hosting/HBoxContainer/FirstColumn"]
 layout_mode = 2
+size_flags_horizontal = 0
 text = "Quit Lobby"
 
 [node name="Invite a Friend" type="Button" parent="MultiplayerMenu/Hosting/HBoxContainer/FirstColumn"]
 layout_mode = 2
+size_flags_horizontal = 0
 text = "Invite a friend"
 
 [node name="Start Game" type="Button" parent="MultiplayerMenu/Hosting/HBoxContainer/FirstColumn"]
 layout_mode = 2
+size_flags_horizontal = 0
 text = "Start Game"
 
-[node name="PanelContainer" type="PanelContainer" parent="MultiplayerMenu/Hosting/HBoxContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="MultiplayerMenu/Hosting/HBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="SecondColumn" type="VBoxContainer" parent="MultiplayerMenu/Hosting/HBoxContainer/PanelContainer"]
+[node name="PanelContainer" type="PanelContainer" parent="MultiplayerMenu/Hosting/HBoxContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="SecondColumn" type="VBoxContainer" parent="MultiplayerMenu/Hosting/HBoxContainer/VBoxContainer/PanelContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="Label" type="Label" parent="MultiplayerMenu/Hosting/HBoxContainer/PanelContainer/SecondColumn"]
+[node name="Label" type="Label" parent="MultiplayerMenu/Hosting/HBoxContainer/VBoxContainer/PanelContainer/SecondColumn"]
 layout_mode = 2
 text = "Player List"
 
-[node name="PlayerList" type="VBoxContainer" parent="MultiplayerMenu/Hosting/HBoxContainer/PanelContainer/SecondColumn"]
+[node name="PlayerList" type="VBoxContainer" parent="MultiplayerMenu/Hosting/HBoxContainer/VBoxContainer/PanelContainer/SecondColumn"]
+layout_mode = 2
+
+[node name="PanelContainer_2" type="PanelContainer" parent="MultiplayerMenu/Hosting/HBoxContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="SecondColumn" type="VBoxContainer" parent="MultiplayerMenu/Hosting/HBoxContainer/VBoxContainer/PanelContainer_2"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Label" type="Label" parent="MultiplayerMenu/Hosting/HBoxContainer/VBoxContainer/PanelContainer_2/SecondColumn"]
+layout_mode = 2
+text = "Chat:"
+
+[node name="ChatList" type="VBoxContainer" parent="MultiplayerMenu/Hosting/HBoxContainer/VBoxContainer/PanelContainer_2/SecondColumn"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="LineEdit" type="LineEdit" parent="MultiplayerMenu/Hosting/HBoxContainer/VBoxContainer/PanelContainer_2/SecondColumn"]
 layout_mode = 2
 
 [node name="Joining" type="MarginContainer" parent="MultiplayerMenu"]

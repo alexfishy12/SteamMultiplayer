@@ -19,14 +19,22 @@ public partial class LobbyListItem : PanelContainer
         }
     }
 
-    private string _ping;
-    public string Ping
+    public string LobbyName
     {
-        get => _ping;
+        get => nameLabel.Text;
         set
         {
-            _ping = value;
-            UpdatePingUi(_ping);
+            nameLabel.Text = value;
+        }
+    }
+
+    public string Ping
+    {
+        get => pingLabel.Text;
+        set
+        {
+            pingLabel.Text = value;
+            UpdatePingUi(value);
         }
     }
 
@@ -43,7 +51,6 @@ public partial class LobbyListItem : PanelContainer
 
     private void UpdatePingUi(string newPing)
     {
-        pingLabel.Text = $"({_ping}ms)";
         int pingValue = int.Parse(newPing);
         if (pingValue < 50)
         {

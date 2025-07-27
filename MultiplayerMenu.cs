@@ -12,8 +12,9 @@ public partial class MultiplayerMenu : Control
 
     [ExportGroup("Lobby")]
     [Export] private Control lobbyPanel;
+    [Export] private Label lobbyNameLabel;
     [Export] private Button inviteFriendButton;
-    [Export] private VBoxContainer playerListContainer;
+    [Export] private VBoxContainer playerList;
     [Export] private PackedScene playerListItemScene;
     [Export] private Button startGameButton;
     [Export] private Button quitLobbyButton;
@@ -21,11 +22,9 @@ public partial class MultiplayerMenu : Control
     [ExportGroup("Joining")]
     [Export] private Control joinGamePanel;
     [Export] private Button searchForLobbiesButton;
-    [Export] private VBoxContainer lobbyListContainer;
+    [Export] private VBoxContainer lobbyList;
     [Export] private PackedScene lobbyListItemScene;
     [Export] private Button backButton;
-
-    private List<LobbyListItem> lobbyListItems = new();
 
     public override void _Ready()
     {
@@ -38,16 +37,78 @@ public partial class MultiplayerMenu : Control
         quitLobbyButton.Pressed += OnQuitLobbyButtonPressed;
         backButton.Pressed += OnBackButtonPressed;
         searchForLobbiesButton.Pressed += OnSearchForLobbiesButtonPressed;
-        LobbyManager.Instance.LobbyFound += OnLobbyFound;
+
+
+        LobbyManager.Instance.LobbyListUpdated += OnLobbyListUpdated;
         LobbyManager.Instance.LobbyJoined += OnLobbyJoined;
+        LobbyManager.Instance.LobbyMembersUpdated += OnLobbyMembersUpdated;
+        LobbyManager.Instance.LobbyLeft += OnLobbyLeft;
         GD.Print("MultiplayerMenu initialized successfully.");
     }
 
-    private void OnLobbyJoined(ulong lobbyId)
+    private void OnLobbyListUpdated(List<Lobby> lobbies)
     {
-        lobbyPanel.Visible = true;
+        ClearLobbyList();
+        foreach (Lobby lobby in lobbies)
+        {
+            LobbyListItem lobbyListItem = lobbyListItemScene.Instantiate<LobbyListItem>();
+            GD.Print($"Lobby found: {lobby.Name} (ID: {lobby.Id})");
+            lobbyListItem.LobbyId = lobby.Id;
+            lobbyListItem.LobbyName = lobby.Name;
+            lobbyListItem.Ping = lobby.Ping.ToString(); // Assuming you have a way to get the ping
+            lobbyList.AddChild(lobbyListItem);
+        }
+    }
+
+    private void OnLobbyJoined(Lobby lobby)
+    {
+        lobbyNameLabel.Text = lobby.Name;
         joinGamePanel.Visible = false;
         mainMenuPanel.Visible = false;
+        lobbyPanel.Visible = true;
+    }
+
+    private void OnLobbyMembersUpdated(List<LobbyMember> members)
+    {
+        GD.Print("Lobby members updated.");
+        ClearMemberList(); // Clear previous members
+        foreach (var member in members)
+        {
+            PlayerListItem playerItem = playerListItemScene.Instantiate<PlayerListItem>();
+            playerItem.PlayerName = member.Name;
+            playerItem.playerId = member.Id.m_SteamID;
+            playerList.AddChild(playerItem);
+        }
+    }
+
+    private void OnLobbyLeft(Lobby lobby)
+    {
+        GD.Print("Left lobby: " + lobby.Name);
+        lobbyPanel.Visible = false;
+        joinGamePanel.Visible = true;
+        mainMenuPanel.Visible = false;
+        LobbyManager.Instance.CurrentLobby = null; // Reset current lobby
+        ClearLobbyList(); // Clear the lobby list when leaving
+        ClearMemberList(); // Clear the member list when leaving
+    }
+
+
+    private void ClearLobbyList()
+    {
+        GD.Print("Clearing member list.");
+        foreach (Node child in lobbyList.GetChildren())
+        {
+            child.QueueFree();
+        }
+    }
+
+    private void ClearMemberList()
+    {
+        GD.Print("Clearing member list.");
+        foreach (Node child in playerList.GetChildren())
+        {
+            child.QueueFree();
+        }
     }
 
     private void OnHostGameButtonPressed()
@@ -110,26 +171,5 @@ public partial class MultiplayerMenu : Control
         // This could involve calling a method in LobbyManager to fetch and display lobbies
         ClearLobbyList(); // Clear previous results
         LobbyManager.Instance.SearchLobbies();
-    }
-
-    private void OnLobbyFound(ulong lobbyId)
-    {
-        // get lobby ping and name from lobbyId
-        GD.Print($"Lobby found with ID: {lobbyId}");
-        var lobbyListItem = lobbyListItemScene.Instantiate<LobbyListItem>();
-        lobbyListItem.LobbyId = new Steamworks.CSteamID(lobbyId);
-        // Assuming you have a method to get the ping for the lobby
-        lobbyListItem.Ping = "100"; // Replace with actual ping retrieval logic
-        lobbyListContainer.AddChild(lobbyListItem);
-    }
-
-    private void ClearLobbyList()
-    {
-        GD.Print("Clearing lobby list.");
-        foreach (var item in lobbyListItems)
-        {
-            item.QueueFree();
-        }
-        lobbyListItems.Clear();
     }
 }
