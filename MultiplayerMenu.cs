@@ -155,6 +155,7 @@ public partial class MultiplayerMenu : Control
         mainMenuPanel.Visible = true;
 
         // reset lobby manager instance?
+        LobbyManager.Instance.LeaveCurrentLobby();
     }
 
     private void OnBackButtonPressed()

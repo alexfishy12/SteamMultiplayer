@@ -60,6 +60,7 @@ public partial class LobbyManager : Node2D
 
         CSteamID lobbyId = new CSteamID(result.m_ulSteamIDLobby);
         CurrentLobby = new Lobby(lobbyId, CurrentPlayer.Id, CurrentPlayer.Name);
+        CurrentPlayer.IsHost = true;
         CurrentLobby.PushChanges();
         GD.Print("Lobby created successfully with ID: " + CurrentLobby.Id);
         LobbyJoined?.Invoke(CurrentLobby);
@@ -112,9 +113,10 @@ public partial class LobbyManager : Node2D
     public void LeaveCurrentLobby()
     {
         SteamMatchmaking.LeaveLobby(CurrentLobby.Id);
+        LobbyMemberList.Clear();
         LobbyLeft?.Invoke(CurrentLobby);
         CurrentLobby = null; // Clear the current lobby reference
-        LobbyMemberList.Clear();
+        CurrentPlayer.IsHost = false;
     }
 
     private void OnLobbyEntered(LobbyEnter_t result, bool bIOFailure)
