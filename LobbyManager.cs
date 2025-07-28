@@ -42,7 +42,7 @@ public partial class LobbyManager : Node2D
         CurrentPlayer.Name = SteamFriends.GetPersonaName();
 
 
-        int avatarFlag = 0; // SteamFriends.GetSmallFriendAvatar(CurrentPlayer.Id);
+        int avatarFlag = SteamFriends.GetSmallFriendAvatar(CurrentPlayer.Id);
         if (avatarFlag == 0)
         {
             GD.Print("No avatar found for the current player.");
@@ -88,7 +88,7 @@ public partial class LobbyManager : Node2D
         CurrentLobby = new Lobby(lobbyId, CurrentPlayer.Id, CurrentPlayer.Name);
         CurrentPlayer.IsHost = true;
         CurrentLobby.PushChanges();
-        GD.Print("Lobby created successfully with ID: " + CurrentLobby.Id);
+        GD.Print($"[Created Lobby]: {CurrentLobby.Name}");
         LobbyJoined?.Invoke(CurrentLobby);
         GetLobbyMembers();
     }
@@ -123,7 +123,7 @@ public partial class LobbyManager : Node2D
 
         if (result.m_nLobbiesMatching == 0)
         {
-            GD.Print("No lobbies found. You may want to create one, or search again.");
+            GD.Print("You may want to create one, or search again.");
         }
 
         LobbyListUpdated?.Invoke(LobbyList.Values.ToList());
@@ -175,10 +175,10 @@ public partial class LobbyManager : Node2D
             return;
         }
 
-        GD.Print($"Getting members for lobby ID: {CurrentLobby.Id}");
+        GD.Print($"Getting current lobby members...");
         int numMembers = SteamMatchmaking.GetNumLobbyMembers(CurrentLobby.Id);
 
-        GD.Print($"Number of members in lobby: {numMembers}");
+        GD.Print($"Found {numMembers} members in the lobby.");
 
         for (int i = 0; i < numMembers; i++)
         {
@@ -192,21 +192,26 @@ public partial class LobbyManager : Node2D
                     continue;
                 }
 
+                LobbyMember foundMember;
                 if (!LobbyMemberList.ContainsKey(memberId))
                 {
-                    LobbyMemberList[memberId] = new LobbyMember(memberId);
+                    foundMember = new LobbyMember(memberId);
+                    LobbyMemberList[memberId] = foundMember;
+                    CacheUserInformationAsync(foundMember.Id, false).ContinueWith(task =>
+                    {
+                        MainThreadDispatcher.Enqueue(() =>
+                        {
+                            LobbyMemberList[foundMember.Id].Name = SteamFriends.GetFriendPersonaName(foundMember.Id);
+                            LobbyMembersUpdated?.Invoke(LobbyMemberList.Values.ToList());
+                        });
+                    });
                 }
-
-                GD.Print("Requesting user information for memberId: " + memberId.m_SteamID);
-                _ = CacheUserInformationAsync(memberId, false);
             }
             catch (Exception ex)
             {
                 GD.PrintErr($"Exception in GetLobbyMembers loop: {ex}");
             }
         }
-
-        LobbyMembersUpdated?.Invoke(LobbyMemberList.Values.ToList());
     }
 
     private void OnLobbyChatUpdate(LobbyChatUpdate_t result)
@@ -238,7 +243,6 @@ public partial class LobbyManager : Node2D
                     {
                         MainThreadDispatcher.Enqueue(() =>
                         {
-                            GD.Print($"User information for member ({changedMember.Id}) cached.");
                             LobbyMemberList[changedMember.Id].Name = SteamFriends.GetFriendPersonaName(changedMember.Id);
                             LobbyMembersUpdated?.Invoke(LobbyMemberList.Values.ToList());
                         });
@@ -275,12 +279,12 @@ public partial class LobbyManager : Node2D
 
     private void OnPersonaStateChanged(PersonaStateChange_t result)
     {
-        GD.Print("OnPersonaStateChanged called.");
         try
         {
             CSteamID memberId = new CSteamID(result.m_ulSteamID);
             if (!LobbyMemberList.ContainsKey(memberId))
                 return;
+            GD.Print("OnPersonaStateChanged called.");
             string personaName;
 
             if (memberId == SteamUser.GetSteamID())
@@ -388,7 +392,7 @@ public partial class LobbyManager : Node2D
         // Got it straight away, skip any waiting
         if (!SteamFriends.RequestUserInformation(steamId, nameonly))
         {
-            GD.Print($"I've got it straight away mate.");
+            GD.Print($"User information already cached for {SteamFriends.GetFriendPersonaName(steamId)} ({steamId})");
             return;
         }
 
@@ -397,10 +401,10 @@ public partial class LobbyManager : Node2D
         while (SteamFriends.RequestUserInformation(steamId, nameonly))
         {
             GD.Print($"Waiting for user information for {steamId}...");
-            await Task.Delay(50);
+            await Task.Delay(200);
         }
-
         // extra wait here seems to solve avatars loading as [?]
         await Task.Delay(100);
+        GD.Print($"User information cached for {SteamFriends.GetFriendPersonaName(steamId)} ({steamId})");
     }
 }

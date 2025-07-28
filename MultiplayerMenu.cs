@@ -1,4 +1,5 @@
 using Godot;
+using Steamworks;
 using System;
 using System.Collections.Generic;
 
@@ -25,6 +26,8 @@ public partial class MultiplayerMenu : Control
     [Export] private VBoxContainer lobbyList;
     [Export] private PackedScene lobbyListItemScene;
     [Export] private Button backButton;
+
+    private string spacer = "\n\n\n";
 
     public override void _Ready()
     {
@@ -70,18 +73,33 @@ public partial class MultiplayerMenu : Control
 
     private void OnLobbyMembersUpdated(List<LobbyMember> members)
     {
-        ClearMemberList(); // Clear previous members
+        ClearLobbyMemberList();
         GD.Print($"Updating lobby members UI...");
         foreach (LobbyMember member in members)
         {
-            GD.Print($"Adding player to UI: {member}");
-            PlayerListItem playerItem = playerListItemScene.Instantiate<PlayerListItem>();
-            playerItem.PlayerName = member.Name;
-            playerItem.playerId = member.Id.m_SteamID;
-            playerItem.PlayerAvatar = member.Avatar != null ? ImageTexture.CreateFromImage(member.Avatar): null;
-            playerList.AddChild(playerItem);
-
+            bool exists = false;
+            foreach (Node child in playerList.GetChildren())
+            {
+                if (child is PlayerListItem playerItem && playerItem.playerId == member.Id)
+                {
+                    GD.Print($"Found existing playerListItem for {member.Name}.");
+                    exists = true;
+                    playerItem.PlayerName = member.Name;
+                    playerItem.PlayerAvatar = member.Avatar != null ? ImageTexture.CreateFromImage(member.Avatar) : null;
+                    break; // Found existing player, it gets updated here
+                }
+            }
+            if (!exists)
+            {
+                GD.Print($"Creating new playerListItem for {member.Name}.");
+                PlayerListItem playerItem = playerListItemScene.Instantiate<PlayerListItem>();
+                playerItem.PlayerName = member.Name;
+                playerItem.playerId = member.Id;
+                playerItem.PlayerAvatar = member.Avatar != null ? ImageTexture.CreateFromImage(member.Avatar) : null;
+                playerList.AddChild(playerItem);
+            }
         }
+
         GD.Print("Lobby members UI updated.");
     }
 
@@ -93,23 +111,20 @@ public partial class MultiplayerMenu : Control
         mainMenuPanel.Visible = false;
         LobbyManager.Instance.CurrentLobby = null; // Reset current lobby
         ClearLobbyList(); // Clear the lobby list when leaving
-        ClearMemberList(); // Clear the member list when leaving
+        ClearLobbyMemberList();
     }
 
-
-    private void ClearLobbyList()
+    private void ClearLobbyMemberList()
     {
-        GD.Print("Clearing lobby list.");
-        foreach (Node child in lobbyList.GetChildren())
+        foreach (Node child in playerList.GetChildren())
         {
             child.QueueFree();
         }
     }
 
-    private void ClearMemberList()
+    private void ClearLobbyList()
     {
-        GD.Print("Clearing member list.");
-        foreach (Node child in playerList.GetChildren())
+        foreach (Node child in lobbyList.GetChildren())
         {
             child.QueueFree();
         }
@@ -117,7 +132,7 @@ public partial class MultiplayerMenu : Control
 
     private void OnHostGameButtonPressed()
     {
-        GD.Print("Host Game button pressed.");
+        GD.Print($"{spacer}Host Game button pressed.");
         // Here you would typically call a method to create a lobby or start hosting
         lobbyPanel.Visible = true;
         joinGamePanel.Visible = false;
@@ -127,7 +142,7 @@ public partial class MultiplayerMenu : Control
 
     private void OnJoinGameButtonPressed()
     {
-        GD.Print("Join Game button pressed.");
+        GD.Print($"{spacer}Join Game button pressed.");
         // Here you would typically call a method to search for lobbies and display them
         lobbyPanel.Visible = false;
         joinGamePanel.Visible = true;
@@ -136,21 +151,21 @@ public partial class MultiplayerMenu : Control
 
     private void OnInviteFriendButtonPressed()
     {
-        GD.Print("Invite Friend button pressed.");
+        GD.Print($"{spacer}Invite Friend button pressed.");
         // Logic to invite a friend to the lobby
         // This could involve opening a friend list or sending an invite through Steam
     }
 
     private void OnStartGameButtonPressed()
     {
-        GD.Print("Start Game button pressed.");
+        GD.Print($"{spacer}Start Game button pressed.");
         // Logic to start the game, such as transitioning to the game scene
         // This could involve checking if all players are ready
     }
 
     private void OnQuitLobbyButtonPressed()
     {
-        GD.Print("Quit button pressed.");
+        GD.Print($"{spacer}Quit button pressed.");
         // Logic to quit the game or return to the main menu
         lobbyPanel.Visible = false;
         joinGamePanel.Visible = false;
@@ -162,7 +177,7 @@ public partial class MultiplayerMenu : Control
 
     private void OnBackButtonPressed()
     {
-        GD.Print("Back button pressed.");
+        GD.Print($"{spacer}Back button pressed.");
         // Logic to return to the previous menu or main menu
         joinGamePanel.Visible = false;
         lobbyPanel.Visible = false;
@@ -171,7 +186,7 @@ public partial class MultiplayerMenu : Control
 
     private void OnSearchForLobbiesButtonPressed()
     {
-        GD.Print("Search for Lobbies button pressed.");
+        GD.Print($"{spacer}Search for Lobbies button pressed.");
         // Logic to search for available lobbies
         // This could involve calling a method in LobbyManager to fetch and display lobbies
         ClearLobbyList(); // Clear previous results

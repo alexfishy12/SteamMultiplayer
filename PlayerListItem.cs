@@ -1,13 +1,16 @@
 using Godot;
 using System;
+using Steamworks;
 
 public partial class PlayerListItem : PanelContainer
 {
-    [Export] public ulong playerId;
+    public CSteamID playerId;
     [Export] private TextureRect playerAvatar;
     [Export] private Label nameLabel;
     [Export] private Label pingLabel;
     [Export] private Button kickButton;
+
+    public LobbyMember lobbyMember;
 
     public Texture2D PlayerAvatar
     {
