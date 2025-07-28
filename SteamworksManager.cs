@@ -12,26 +12,32 @@ public partial class SteamworksManager : Node
     {
         if (Instance != null)
         {
-            GD.PrintErr("An instance of SteamScript already exists. Only one instance is allowed.");
+            GD.PrintErr("An instance of SteamworksManager already exists. Only one instance is allowed.");
             return;
         }
-        GD.Print(SteamAPI.IsSteamRunning() ? "Steam is running." : "Steam is not running. Please start Steam to use the Steam API.");
+        Instance = this;
         try
         {
-            if ( SteamAPI.RestartAppIfNecessary(appId) ) 
-            {
-                GD.Print("Restarting app to ensure Steam API is initialized correctly.");
-                GetTree().Quit();
-                return; // Exit if the app needs to be restarted
-            }
-            if (!SteamAPI.Init())
+            if (!SteamAPI.Init()) // initializes the Steam API
             {
                 GD.PrintErr("Failed to initialize Steam API.");
                 return;
             }
-            Instance = this;
-            GD.Print("Steam API initialized successfully.");
+            if (!SteamAPI.IsSteamRunning()) // checks if Steam is running
+            {
+                GD.PrintErr("Steam is not running. Please start Steam to use the Steam API.");
+                return;
+            }
+            if (SteamAPI.RestartAppIfNecessary(appId)) // restarts if game didn't start using Steam
+            {
+                GD.Print("Restarting app to ensure Steam API is initialized correctly.");
+                GetTree().Quit();
+                return;
+            }
+            // Steamworks has been initialized successfully
+            GD.Print($"Steam API initialized successfully. App ID: {appId}");
             GD.Print($"Logged in as: {SteamFriends.GetPersonaName()}");
+            GD.Print("SteamworksManager initialized successfully.");
         }
         catch (Exception ex)
         {
@@ -43,6 +49,7 @@ public partial class SteamworksManager : Node
     {
         if (Instance == null) return;
         SteamAPI.RunCallbacks();
+        MainThreadDispatcher.ExecutePending(); // process any actions queued for the main thread
     }
 
     public override void _ExitTree()

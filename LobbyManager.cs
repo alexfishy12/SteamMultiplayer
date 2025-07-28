@@ -3,6 +3,7 @@ using System;
 using Steamworks;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 public partial class LobbyManager : Node2D
 {
@@ -13,6 +14,7 @@ public partial class LobbyManager : Node2D
     private CallResult<LobbyEnter_t> m_LobbyEnter;
     private Callback<PersonaStateChange_t> m_PersonaStateChange;
     private Callback<LobbyChatUpdate_t> m_LobbyChatUpdate;
+    private Callback<LobbyChatMsg_t> m_LobbyChatMsg;
 
     public event Action<Lobby> LobbyLeft;
     public event Action<Lobby> LobbyJoined;
@@ -63,6 +65,7 @@ public partial class LobbyManager : Node2D
         
         m_PersonaStateChange = Callback<PersonaStateChange_t>.Create(OnPersonaStateChanged);
         m_LobbyChatUpdate = Callback<LobbyChatUpdate_t>.Create(OnLobbyChatUpdate);
+        m_LobbyChatMsg = Callback<LobbyChatMsg_t>.Create(OnLobbyChatReceived);
 
         GD.Print("LobbyManager initialized successfully.");
     }
@@ -195,11 +198,7 @@ public partial class LobbyManager : Node2D
                 }
 
                 GD.Print("Requesting user information for memberId: " + memberId.m_SteamID);
-                if (!SteamFriends.RequestUserInformation(memberId, false))
-                {
-                    GD.Print("We already have all the details for memberId: " + memberId.m_SteamID);
-                    LobbyMemberList[memberId].Name = SteamFriends.GetFriendPersonaName(memberId);
-                }
+                _ = CacheUserInformationAsync(memberId, false);
             }
             catch (Exception ex)
             {
@@ -234,12 +233,16 @@ public partial class LobbyManager : Node2D
                 case EChatMemberStateChange.k_EChatMemberStateChangeEntered:
                     GD.Print($"{changedMember} has entered the lobby.");
                     GD.Print($"Requesting user information for memberId: {changedMember}");
-                    if (!SteamFriends.RequestUserInformation(changedMember.Id, false))
-                    {
-                        GD.Print("We already have all the details for memberId: " + changedMember);
-                        changedMember.Name = SteamFriends.GetFriendPersonaName(changedMember.Id);
-                    }
                     LobbyMemberList[changedMember.Id] = changedMember;
+                    CacheUserInformationAsync(changedMember.Id, false).ContinueWith(task =>
+                    {
+                        MainThreadDispatcher.Enqueue(() =>
+                        {
+                            GD.Print($"User information for member ({changedMember.Id}) cached.");
+                            LobbyMemberList[changedMember.Id].Name = SteamFriends.GetFriendPersonaName(changedMember.Id);
+                            LobbyMembersUpdated?.Invoke(LobbyMemberList.Values.ToList());
+                        });
+                    });
                     break;
                 case EChatMemberStateChange.k_EChatMemberStateChangeLeft:
                     GD.Print($"{changedMember} has left the lobby.");
@@ -276,8 +279,8 @@ public partial class LobbyManager : Node2D
         try
         {
             CSteamID memberId = new CSteamID(result.m_ulSteamID);
-            //if (!LobbyMemberList.ContainsKey(memberId))
-            //    return;
+            if (!LobbyMemberList.ContainsKey(memberId))
+                return;
             string personaName;
 
             if (memberId == SteamUser.GetSteamID())
@@ -287,12 +290,6 @@ public partial class LobbyManager : Node2D
             else
             {
                 personaName = SteamFriends.GetFriendPersonaName(memberId);
-            }
-
-            if (!LobbyMemberList.ContainsKey(memberId))
-            {
-                GD.Print($"Member {memberId} not found in LobbyMemberList, creating new entry.");
-                LobbyMemberList[memberId] = new LobbyMember(memberId);
             }
 
             LobbyMemberList[memberId].Name = personaName;
@@ -334,41 +331,76 @@ public partial class LobbyManager : Node2D
 
     public void OnLobbyChatReceived(LobbyChatMsg_t result)
     {
-        if (result.m_ulSteamIDLobby != CurrentLobby.Id.m_SteamID)
+        try
         {
-            GD.PrintErr("Received chat message for a different lobby.");
+            if (result.m_ulSteamIDLobby != CurrentLobby.Id.m_SteamID)
+            {
+                GD.PrintErr("Received chat message for a different lobby.");
+                return;
+            }
+
+            GD.Print($"Chat message received in lobby {CurrentLobby.Id}: {result.m_iChatID}");
+
+            CSteamID senderId;
+            EChatEntryType chatEntryType;
+            byte[] data = new byte[4096];
+
+            GD.Print($"Defining variables...");
+            int messageLength = SteamMatchmaking.GetLobbyChatEntry(
+                CurrentLobby.Id,
+                (int)result.m_iChatID,
+                out senderId,
+                data,
+                data.Length,
+                out chatEntryType
+            );
+
+            GD.Print($"Message is {messageLength} bytes long.");
+            if (messageLength <= 0)
+            {
+                GD.PrintErr("Failed to retrieve chat message.");
+                return;
+            }
+
+            GD.Print($"Creating chat message object...");
+            // Convert byte array to string
+            string message = System.Text.Encoding.UTF8.GetString(data, 0, messageLength);
+
+            ChatMessage chatMsg = new ChatMessage
+            (
+                senderId,
+                LobbyMemberList[senderId].Name,
+                message
+            );
+
+            GD.Print($"Chat message received in lobby {CurrentLobby.Id}: {chatMsg.ToString()}");
+            ChatMessageReceived?.Invoke(chatMsg);
+        }
+        catch (Exception ex)
+        {
+            GD.PrintErr($"Exception in OnLobbyChatReceived: {ex}");
+            return;
+        }
+    }
+
+    private async Task CacheUserInformationAsync(CSteamID steamId, bool nameonly)
+    {
+        // Got it straight away, skip any waiting
+        if (!SteamFriends.RequestUserInformation(steamId, nameonly))
+        {
+            GD.Print($"I've got it straight away mate.");
             return;
         }
 
-        GD.Print($"Chat message received in lobby {CurrentLobby.Id}: {result.m_iChatID}");
+        await Task.Delay(100);
 
-        CSteamID senderId;
-        EChatEntryType chatEntryType;
-        byte[] data = new byte[4096];
-
-        int messageLength = SteamMatchmaking.GetLobbyChatEntry(
-            CurrentLobby.Id,
-            (int)result.m_iChatID,
-            out senderId, 
-            data, 
-            data.Length,
-            out chatEntryType
-        );
-        if (messageLength <= 0)
+        while (SteamFriends.RequestUserInformation(steamId, nameonly))
         {
-            GD.PrintErr("Failed to retrieve chat message.");
-            return;
+            GD.Print($"Waiting for user information for {steamId}...");
+            await Task.Delay(50);
         }
-        // Convert byte array to string
-        string message = System.Text.Encoding.UTF8.GetString(data, 0, messageLength);
-        
-        ChatMessage chatMsg = new ChatMessage
-        (
-            senderId,
-            SteamFriends.GetFriendPersonaName(senderId),
-            message
-        );
 
-        ChatMessageReceived?.Invoke(chatMsg);
+        // extra wait here seems to solve avatars loading as [?]
+        await Task.Delay(100);
     }
 }

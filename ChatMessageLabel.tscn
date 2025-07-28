@@ -1,0 +1,7 @@
+[gd_scene format=3 uid="uid://bc3bd3xaalocj"]
+
+[node name="ChatMessageLabel" type="Label"]
+custom_minimum_size = Vector2(400, 0)
+theme_override_font_sizes/font_size = 12
+text = "ChatMessage"
+autowrap_mode = 2

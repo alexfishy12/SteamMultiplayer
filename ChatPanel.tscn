@@ -1,31 +1,47 @@
-[gd_scene load_steps=2 format=3 uid="uid://bf3kxo7jk23uj"]
+[gd_scene load_steps=3 format=3 uid="uid://bxsnxsqqiwacp"]
 
 [ext_resource type="Script" uid="uid://ct7yjc5l2befo" path="res://ChatPanel.cs" id="1_sx3uj"]
+[ext_resource type="PackedScene" uid="uid://bc3bd3xaalocj" path="res://ChatMessageLabel.tscn" id="2_2h6qb"]
 
-[node name="ChatPanel" type="VBoxContainer" node_paths=PackedStringArray("messageInput", "sendButton", "chatList")]
+[node name="ChatPanel" type="PanelContainer" node_paths=PackedStringArray("messageInput", "sendButton", "chatList")]
 size_flags_horizontal = 3
+size_flags_vertical = 3
 script = ExtResource("1_sx3uj")
-messageInput = NodePath("HBoxContainer/ChatInputLineEdit")
-sendButton = NodePath("HBoxContainer/SendButton")
-chatList = NodePath("ChatList")
+messageInput = NodePath("MarginContainer/ChatPanel/HBoxContainer/ChatInputLineEdit")
+sendButton = NodePath("MarginContainer/ChatPanel/HBoxContainer/SendButton")
+chatList = NodePath("MarginContainer/ChatPanel/ChatList")
+chatMessageScene = ExtResource("2_2h6qb")
 
-[node name="Label" type="Label" parent="."]
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 2
+theme_override_constants/margin_left = 2
+theme_override_constants/margin_top = 2
+theme_override_constants/margin_right = 2
+theme_override_constants/margin_bottom = 2
+
+[node name="ChatPanel" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Label" type="Label" parent="MarginContainer/ChatPanel"]
 layout_mode = 2
 text = "Chat:"
 
-[node name="ChatList" type="VBoxContainer" parent="."]
+[node name="ChatList" type="VBoxContainer" parent="MarginContainer/ChatPanel"]
 layout_mode = 2
 size_flags_vertical = 3
+theme_override_constants/separation = 0
 
-[node name="HBoxContainer" type="HBoxContainer" parent="."]
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/ChatPanel"]
 layout_mode = 2
 
-[node name="ChatInputLineEdit" type="LineEdit" parent="HBoxContainer"]
+[node name="ChatInputLineEdit" type="LineEdit" parent="MarginContainer/ChatPanel/HBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 12
+keep_editing_on_text_submit = true
 
-[node name="SendButton" type="Button" parent="HBoxContainer"]
+[node name="SendButton" type="Button" parent="MarginContainer/ChatPanel/HBoxContainer"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 12
 text = "Send"

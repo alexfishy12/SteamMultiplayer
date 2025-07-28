@@ -1,11 +1,12 @@
 using Godot;
 using System;
 
-public partial class ChatPanel : VBoxContainer
+public partial class ChatPanel : Control
 {
     [Export] private LineEdit messageInput;
     [Export] private Button sendButton;
     [Export] private VBoxContainer chatList;
+    [Export] private PackedScene chatMessageScene; // Optional: if you want to use a custom scene for chat messages
 
     public override void _Ready()
     {
@@ -37,8 +38,7 @@ public partial class ChatPanel : VBoxContainer
 
     private void OnChatMessageReceived(ChatMessage chatMsg)
     {
-        Label chatLabel = new Label();
-        chatLabel.AddThemeFontSizeOverride("font_size", 12); // Set font size
+        Label chatLabel = chatMessageScene.Instantiate<Label>();
         chatLabel.Text = chatMsg.ToString();
         chatList.AddChild(chatLabel);
     }
